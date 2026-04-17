@@ -1,0 +1,36 @@
+# =========================
+# JAVA / MAVEN
+# =========================
+backend-java/target/
+*.log
+
+# =========================
+# NODE / REACT / ELECTRON
+# =========================
+node_modules/
+frontend/node_modules/
+electron/node_modules/
+
+frontend/dist/
+electron/dist/
+
+# =========================
+# IDEs
+# =========================
+.vscode/
+.idea/
+*.iml
+
+# =========================
+# SISTEMA
+# =========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# =========================
+# TEMP / CACHE
+# =========================
+*.tmp
+*.temp
+.cache/
