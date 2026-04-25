@@ -5,14 +5,25 @@ backend-java/target/
 *.log
 
 # =========================
-# NODE / REACT / ELECTRON
+# NODE / REACT / ELECTRON / API
 # =========================
 node_modules/
+
 frontend/node_modules/
 electron/node_modules/
+api-node/node_modules/
 
 frontend/dist/
 electron/dist/
+api-node/dist/
+
+# =========================
+# ENV
+# =========================
+.env
+api-node/.env
+frontend/.env
+electron/.env
 
 # =========================
 # IDEs
@@ -34,3 +45,15 @@ Desktop.ini
 *.tmp
 *.temp
 .cache/
+
+# =========================
+# DOCKER
+# =========================
+docker-data/
+mariadb_data/
+
+# =========================
+# MEDIA OPCIONAL
+# =========================
+# Descomenta si NO quieres subir multimedia
+media/

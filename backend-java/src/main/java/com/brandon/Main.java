@@ -28,6 +28,6 @@ public class Main {
                     "mensaje", "Hola desde el backend Java",
                     "estado", "ok",
                     "hora", LocalDateTime.now().toString()));
-        });
+        }); 
     }
 }
