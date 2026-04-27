@@ -1,0 +1,27 @@
+services:
+  api-node:
+    # Construye la imagen usando este proyecto.
+    build: .
+
+    # Nombre del contenedor.
+    container_name: api_node_musicbh
+
+    # Si se apaga, Docker lo vuelve a levantar.
+    restart: unless-stopped
+
+    # Abre el puerto 3000 del contenedor en tu PC.
+    ports:
+      - "3000:3000"
+
+    # Lee las variables del archivo .env.
+    env_file:
+      - .env
+
+    # Conecta este servicio a la red compartida.
+    networks:
+      - red_backend
+
+networks:
+  # Esta red ya existe fuera de este archivo.
+  red_backend:
+    external: true
