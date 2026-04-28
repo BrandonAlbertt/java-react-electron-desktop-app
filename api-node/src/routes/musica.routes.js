@@ -1,21 +1,31 @@
-const express = require("express");
+// RUTAS DE MUSICA
+// Relacion: app.js -> musica.routes.js -> musica.controller.js -> musica.model.js
+// Este archivo define las subrutas, el controller maneja la logica
 
-// Router de música (se conecta en app.js)
+const express = require("express");
 const router = express.Router();
 
 const {
     listarMusica,
     obtenerMusicaPorId,
+    crearMusica,
+    editarMusica,
+    eliminarMusica,
 } = require("../controllers/musica.controller");
 
-// En app.js se monta: app.use("/api/musica", router)
-// Ruta final: GET /api/musica
-// Devuelve todas las canciones
+// GET /api/musica - Listar todas las canciones
 router.get("/", listarMusica);
 
-// Ruta final: GET /api/musica/:id
-// Devuelve una canción por id
+// GET /api/musica/:id - Obtener cancion por ID
 router.get("/:id", obtenerMusicaPorId);
 
-// Exporta el router para que app.js lo pueda usar
+// POST /api/musica - Crear cancion (enviar JSON en body)
+router.post("/", crearMusica);
+
+// PUT /api/musica/:id - Editar cancion (enviar JSON en body)
+router.put("/:id", editarMusica);
+
+// DELETE /api/musica/:id - Eliminar cancion
+router.delete("/:id", eliminarMusica);
+
 module.exports = router;

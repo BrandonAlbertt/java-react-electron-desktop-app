@@ -1,22 +1,48 @@
-// Importa las funciones que manejan la base de datos (usuario.model.js)
-// En el model se exportan functions como crearUsuario(busca/crea en la DB).
+// CONTROLLER DE USUARIOS
+// Relacion: routes -> controller -> model -> BD
+// Aqui se recibe la request, se valida y se responde al cliente
+
 const usuarioModel = require("../models/usuario.model");
 
-// Controlador para crear un usuario.
-// Relación con otros archivos:
-// - app.js monta la ruta base: app.use('/api/usuarios', usuarioRoutes)
-// - routes/usuario.routes.js define POST '/' que llama a esta función
-// - models/usuario.model.js contiene la lógica SQL (insert, select)
+// GET /api/usuarios
+async function listarUsuarios(req, res) {
+    try {
+        // Llama al model para traer todos los usuarios
+        const usuarios = await usuarioModel.listarUsuarios();
+        // Responde con un array JSON
+        res.json(usuarios);
+    } catch (error) {
+        console.error("Error al listar usuarios:", error);
+        res.status(500).json({ mensaje: "Error al listar usuarios" });
+    }
+}
+
+// GET /api/usuarios/:id
+async function obtenerUsuarioPorId(req, res) {
+    try {
+        // Saca el ID desde la URL
+        const { id } = req.params;
+
+        // Busca el usuario en el model
+        const usuario = await usuarioModel.obtenerUsuarioPorId(id);
+
+        if (!usuario) {
+            return res.status(404).json({
+                mensaje: "Usuario no encontrado",
+            });
+        }
+
+        res.json(usuario);
+    } catch (error) {
+        console.error("Error al obtener usuario:", error);
+        res.status(500).json({ mensaje: "Error al obtener usuario" });
+    }
+}
+
+// POST /api/usuarios
 async function crearUsuario(req, res) {
     try {
-        // Los datos del usuario vienen en el cuerpo de la petición (req.body)
-        // En Postman debes enviar un JSON en el body, por ejemplo:
-        // {
-        //   "avatar_id": 1,
-        //   "nombre_usuario": "juan",
-        //   "email": "juan@mail.com",
-        //   "contrasena": "miPassword"
-        // }
+        // Los datos llegan en req.body desde Postman o frontend
         const {
             avatar_id,
             nombre_usuario,
@@ -24,27 +50,23 @@ async function crearUsuario(req, res) {
             contrasena,
         } = req.body;
 
-        // Validación básica: todos los campos obligatorios
-        // Si falta algo, respondemos 400 Bad Request
+        // Valida que no falte ningun campo
         if (!avatar_id || !nombre_usuario || !email || !contrasena) {
             return res.status(400).json({
                 mensaje: "Todos los campos son obligatorios",
             });
         }
 
-        // Usa el model para buscar si ya existe el email
-        // buscarUsuarioPorEmail está en usuario.model.js y hace SELECT en la DB
+        // Revisa si ya existe un usuario con ese email
         const usuarioExistente = await usuarioModel.buscarUsuarioPorEmail(email);
 
-        // Si existe, respondemos 409 Conflict
         if (usuarioExistente) {
             return res.status(409).json({
                 mensaje: "El email ya está registrado",
             });
         }
 
-        // Llama al model para insertar el usuario en la DB.
-        // crearUsuario retorna el id (insertId) del nuevo registro.
+        // Crea el usuario en BD
         const nuevoUsuarioId = await usuarioModel.crearUsuario({
             avatar_id,
             nombre_usuario,
@@ -52,26 +74,112 @@ async function crearUsuario(req, res) {
             contrasena,
         });
 
-        // Respuesta 201 Created con datos básicos del nuevo usuario
+        // Recupera el usuario completo para devolverlo en la respuesta
+        const nuevoUsuario = await usuarioModel.obtenerUsuarioPorId(nuevoUsuarioId);
+
         res.status(201).json({
             mensaje: "Usuario creado correctamente",
-            usuario: {
-                id: nuevoUsuarioId,
-                avatar_id,
-                nombre_usuario,
-                email,
-            },
+            usuario: nuevoUsuario,
         });
     } catch (error) {
-        // Errores inesperados: registrar en consola y devolver 500
         console.error("Error al crear usuario:", error);
+        res.status(500).json({ mensaje: "Error al crear usuario" });
+    }
+}
 
-        res.status(500).json({
-            mensaje: "Error al crear usuario",
+// PUT /api/usuarios/:id
+async function editarUsuario(req, res) {
+    try {
+        // Toma el ID de la URL
+        const { id } = req.params;
+
+        // Toma los nuevos datos del body
+        const {
+            avatar_id,
+            nombre_usuario,
+            email,
+            contrasena,
+        } = req.body;
+
+        // Verifica que venga todo completo
+        if (!avatar_id || !nombre_usuario || !email || !contrasena) {
+            return res.status(400).json({
+                mensaje: "Todos los campos son obligatorios",
+            });
+        }
+
+        // Verifica que el usuario exista antes de editar
+        const usuarioActual = await usuarioModel.obtenerUsuarioPorId(id);
+
+        if (!usuarioActual) {
+            return res.status(404).json({
+                mensaje: "Usuario no encontrado",
+            });
+        }
+
+        // Evita duplicar emails entre usuarios distintos
+        const usuarioConEmail = await usuarioModel.buscarUsuarioPorEmail(email);
+
+        if (usuarioConEmail && usuarioConEmail.id != id) {
+            return res.status(409).json({
+                mensaje: "El email ya está registrado por otro usuario",
+            });
+        }
+
+        // Ejecuta el UPDATE en BD
+        const editado = await usuarioModel.editarUsuario(id, {
+            avatar_id,
+            nombre_usuario,
+            email,
+            contrasena,
         });
+
+        if (!editado) {
+            return res.status(404).json({
+                mensaje: "Usuario no encontrado",
+            });
+        }
+
+        const usuarioEditado = await usuarioModel.obtenerUsuarioPorId(id);
+
+        res.json({
+            mensaje: "Usuario editado correctamente",
+            usuario: usuarioEditado,
+        });
+    } catch (error) {
+        console.error("Error al editar usuario:", error);
+        res.status(500).json({ mensaje: "Error al editar usuario" });
+    }
+}
+
+// DELETE /api/usuarios/:id
+async function eliminarUsuario(req, res) {
+    try {
+        // Toma el ID de la URL
+        const { id } = req.params;
+
+        // Elimina usuario y sus relaciones
+        const eliminado = await usuarioModel.eliminarUsuario(id);
+
+        if (!eliminado) {
+            return res.status(404).json({
+                mensaje: "Usuario no encontrado",
+            });
+        }
+
+        res.json({
+            mensaje: "Usuario eliminado correctamente",
+        });
+    } catch (error) {
+        console.error("Error al eliminar usuario:", error);
+        res.status(500).json({ mensaje: "Error al eliminar usuario" });
     }
 }
 
 module.exports = {
+    listarUsuarios,
+    obtenerUsuarioPorId,
     crearUsuario,
+    editarUsuario,
+    eliminarUsuario,
 };

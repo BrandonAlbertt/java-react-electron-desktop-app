@@ -242,12 +242,20 @@ app.listen(PORT, () => {
 |   PUT    http://localhost:3000/api/avatares/1
 |   DELETE http://localhost:3000/api/avatares/1
 |
-| USUARIOS (crear cuenta)
-|   POST http://localhost:3000/api/usuarios
+| USUARIOS (rutas de app.js)
+|   GET    http://localhost:3000/api/usuarios
+|   GET    http://localhost:3000/api/usuarios/1
+|   POST   http://localhost:3000/api/usuarios
+|   PUT    http://localhost:3000/api/usuarios/1
+|   DELETE http://localhost:3000/api/usuarios/1
+|   GET    http://localhost:3000/api/usuarios/1/biblioteca
 |
-| MUSICA (canciones)
-|   GET http://localhost:3000/api/musica
-|   GET http://localhost:3000/api/musica/1
+| MUSICA (canciones - CRUD COMPLETO)
+|   GET    http://localhost:3000/api/musica (listar todas)
+|   GET    http://localhost:3000/api/musica/1 (obtener por ID)
+|   POST   http://localhost:3000/api/musica (crear - JSON en body)
+|   PUT    http://localhost:3000/api/musica/1 (editar - JSON en body)
+|   DELETE http://localhost:3000/api/musica/1 (eliminar)
 |
 | PLAYLIST (listas de reproducción)
 |   GET    http://localhost:3000/api/usuarios/1/listas

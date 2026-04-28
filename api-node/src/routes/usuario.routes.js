@@ -1,15 +1,42 @@
+// RUTAS DE USUARIOS
+// Relacion: app.js -> usuario.routes.js -> usuario.controller.js -> usuario.model.js
+// Este archivo solo define las rutas; la logica vive en el controller
+
 const express = require("express");
 
-// Router de usuarios (se conecta en app.js)
 const router = express.Router();
 
 const {
+    listarUsuarios,
+    obtenerUsuarioPorId,
     crearUsuario,
+    editarUsuario,
+    eliminarUsuario,
 } = require("../controllers/usuario.controller");
 
-// En app.js se monta: app.use("/api/usuarios", router)
-// Aqui "/" completa la ruta final: POST /api/usuarios
+// GET /api/usuarios - Lista todos los usuarios
+router.get("/", listarUsuarios);
+
+// GET /api/usuarios/:id - Busca un usuario por ID
+router.get("/:id", obtenerUsuarioPorId);
+
+// POST /api/usuarios - Crea un usuario nuevo
+// En Postman:
+//   Method: POST
+//   URL: http://localhost:3000/api/usuarios
+//   Body -> raw -> JSON
+//   {
+//     "avatar_id": 1,
+//     "nombre_usuario": "Juan",
+//     "email": "juan@mail.com",
+//     "contrasena": "123456"
+//   }
 router.post("/", crearUsuario);
 
-// Exporta el router para que app.js lo pueda usar
+// PUT /api/usuarios/:id - Edita un usuario existente
+router.put("/:id", editarUsuario);
+
+// DELETE /api/usuarios/:id - Elimina un usuario
+router.delete("/:id", eliminarUsuario);
+
 module.exports = router;
