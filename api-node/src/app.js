@@ -221,3 +221,54 @@ app.listen(PORT, () => {
 ========================================
     `);
 });
+
+/*
+|--------------------------------------------------------------------------
+| LISTA DE ENDPOINTS - REFERENCIA RAPIDA PARA DESARROLLADORES
+|--------------------------------------------------------------------------
+| Copia y pega estas URLs en el navegador (GET) o en Postman (POST/PUT/DELETE)
+| Reemplaza el número (ej: 1, 2, 10) con el ID que quieras consultar/modificar
+|
+| EXPLORAR (contenido general)
+|   GET http://localhost:3000/api/explorar
+|
+| BIBLIOTECA (música guardada de un usuario)
+|   GET http://localhost:3000/api/usuarios/1/biblioteca
+|
+| AVATARES (fotos de perfil)
+|   GET    http://localhost:3000/api/avatares
+|   GET    http://localhost:3000/api/avatares/1
+|   POST   http://localhost:3000/api/avatares
+|   PUT    http://localhost:3000/api/avatares/1
+|   DELETE http://localhost:3000/api/avatares/1
+|
+| USUARIOS (crear cuenta)
+|   POST http://localhost:3000/api/usuarios
+|
+| MUSICA (canciones)
+|   GET http://localhost:3000/api/musica
+|   GET http://localhost:3000/api/musica/1
+|
+| PLAYLIST (listas de reproducción)
+|   GET    http://localhost:3000/api/usuarios/1/listas
+|   POST   http://localhost:3000/api/usuarios/1/listas
+|   POST   http://localhost:3000/api/listas/2/canciones/10
+|   DELETE http://localhost:3000/api/listas/2/canciones/10
+|   DELETE http://localhost:3000/api/listas/2
+|
+| GRUPOS MUSICALES
+|   GET    http://localhost:3000/api/grupos-musicales
+|   GET    http://localhost:3000/api/grupos-musicales/1
+|   POST   http://localhost:3000/api/grupos-musicales
+|   PUT    http://localhost:3000/api/grupos-musicales/1
+|   DELETE http://localhost:3000/api/grupos-musicales/1
+|
+| GENEROS MUSICALES
+|   GET    http://localhost:3000/api/generos-musicales
+|   GET    http://localhost:3000/api/generos-musicales/1
+|   POST   http://localhost:3000/api/generos-musicales
+|   PUT    http://localhost:3000/api/generos-musicales/1
+|   DELETE http://localhost:3000/api/generos-musicales/1
+|
+|--------------------------------------------------------------------------
+*/
