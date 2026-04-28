@@ -20,6 +20,7 @@ async function obtenerBibliotecaPorUsuario(usuarioId) {
         SELECT
             l.id AS lista_id,
             l.nombre AS lista_nombre,
+            l.url_imagen AS lista_imagen,
 
             m.id AS musica_id,
             m.titulo,
@@ -53,6 +54,7 @@ async function obtenerBibliotecaPorUsuario(usuarioId) {
         GROUP BY
             l.id,
             l.nombre,
+            l.url_imagen,
             m.id,
             m.titulo,
             m.link_audio,

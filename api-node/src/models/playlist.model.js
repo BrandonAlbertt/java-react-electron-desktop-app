@@ -2,29 +2,32 @@
 const db = require("../config/db");
 
 // Inserta una lista nueva para un usuario.
+// Ahora también guarda url_imagen, que fue agregada a lista_musicales con ALTER TABLE.
 // La usa: playlist.controller -> crearLista()
-async function crearLista(usuarioId, nombre) {
+async function crearLista(usuarioId, nombre, urlImagen = null) {
     const [result] = await db.query(`
-        INSERT INTO lista_musicales (nombre, usuario_id)
-        VALUES (?, ?)
-    `, [nombre, usuarioId]);
+        INSERT INTO lista_musicales (nombre, url_imagen, usuario_id)
+        VALUES (?, ?, ?)
+    `, [nombre, urlImagen, usuarioId]);
 
     return result.insertId;
 }
 
 // Devuelve las listas de un usuario con cantidad de canciones.
+// Se incluye url_imagen para que la vista pueda mostrar la portada de cada lista.
 // La usa: playlist.controller -> listarListasPorUsuario()
 async function listarListasPorUsuario(usuarioId) {
     const [rows] = await db.query(`
         SELECT
             l.id,
             l.nombre,
+            l.url_imagen,
             COUNT(lm.musica_id) AS cantidad_canciones
         FROM lista_musicales l
         LEFT JOIN lista_musica_m lm
             ON l.id = lm.lista_id
         WHERE l.usuario_id = ?
-        GROUP BY l.id, l.nombre
+        GROUP BY l.id, l.nombre, l.url_imagen
         ORDER BY l.id DESC
     `, [usuarioId]);
 

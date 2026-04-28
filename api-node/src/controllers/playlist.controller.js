@@ -6,9 +6,9 @@ const playlistModel = require("../models/playlist.model");
 // Llega desde: POST /api/usuarios/:usuarioId/listas (definido en routes/playlist.routes.js)
 async function crearLista(req, res) {
     try {
-        // usuarioId viene en la URL y nombre viene en el body JSON
+        // usuarioId viene en la URL; nombre y url_imagen vienen en el body JSON
         const { usuarioId } = req.params;
-        const { nombre } = req.body;
+        const { nombre, url_imagen } = req.body;
 
         // Validación mínima
         if (!nombre) {
@@ -18,7 +18,7 @@ async function crearLista(req, res) {
         }
 
         // Llama al model para insertar en base de datos
-        const nuevaListaId = await playlistModel.crearLista(usuarioId, nombre);
+        const nuevaListaId = await playlistModel.crearLista(usuarioId, nombre, url_imagen || null);
 
         // Respuesta exitosa
         res.status(201).json({
@@ -26,6 +26,8 @@ async function crearLista(req, res) {
             lista: {
                 id: nuevaListaId,
                 nombre,
+                // -> Se devuelve la imagen nueva de la lista
+                url_imagen: url_imagen || null,
                 usuario_id: Number(usuarioId),
             },
         });
@@ -48,7 +50,7 @@ async function listarListasPorUsuario(req, res) {
         // Consulta al model
         const listas = await playlistModel.listarListasPorUsuario(usuarioId);
 
-        // Devuelve lista en JSON
+        // Devuelve lista en JSON con url_imagen incluida desde el model
         res.json(listas);
     } catch (error) {
         console.error("Error al listar listas:", error);

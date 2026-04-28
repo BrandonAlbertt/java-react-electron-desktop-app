@@ -62,6 +62,9 @@ CREATE TABLE lista_musicales (
     FOREIGN KEY (usuario_id)
         REFERENCES usuarios(id)
 );
+ALTER TABLE lista_musicales
+ADD COLUMN url_imagen VARCHAR(255) NULL AFTER nombre;
+
 
 CREATE TABLE lista_musica_m (
     lista_id INT NOT NULL,

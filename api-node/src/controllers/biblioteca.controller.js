@@ -21,6 +21,8 @@ async function obtenerBiblioteca(req, res) {
                 listasMap.set(row.lista_id, {
                     id: row.lista_id,
                     nombre: row.lista_nombre,
+                    // -> Imagen agregada por la modificación de la tabla
+                    imagen: row.lista_imagen,
                     canciones: [],
                 });
             }
