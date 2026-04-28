@@ -1,20 +1,20 @@
-# Usa Node.js para ejecutar la API.
+# Usa Node.js dentro de una imagen liviana.
 FROM node:22-alpine
 
-# Carpeta donde va a trabajar el contenedor.
+# Define la carpeta donde trabajará el contenedor.
 WORKDIR /app
 
 # Copia solo los archivos necesarios para instalar dependencias.
 COPY package*.json ./
 
-# Instala las dependencias del proyecto.
+# Instala las librerías del proyecto dentro del contenedor.
 RUN npm install
 
-# Copia el resto del código al contenedor.
+# Copia todo el código de la API al contenedor.
 COPY . .
 
 # Indica que la app usa el puerto 3000.
 EXPOSE 3000
 
-# Comando que se ejecuta al iniciar el contenedor.
+# Arranca la API cuando el contenedor se ejecuta.
 CMD ["npm", "start"]

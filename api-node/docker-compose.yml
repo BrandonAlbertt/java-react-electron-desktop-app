@@ -1,27 +1,37 @@
 services:
   api-node:
-    # Construye la imagen usando este proyecto.
+    # Crea el contenedor usando este proyecto como base.
     build: .
 
-    # Nombre del contenedor.
+    # Nombre del contenedor que verás en Docker.
     container_name: api_node_musicbh
 
-    # Si se apaga, Docker lo vuelve a levantar.
+    # Si el contenedor se detiene, Docker lo vuelve a levantar.
     restart: unless-stopped
 
-    # Abre el puerto 3000 del contenedor en tu PC.
+    # Abre el puerto 3000 del contenedor en tu computadora.
+    # Así puedes entrar a la API desde http://localhost:3000
     ports:
       - "3000:3000"
 
-    # Lee las variables del archivo .env.
+    # Carga las variables del archivo .env.
+    # Aquí van datos como el puerto y la conexión a la base de datos.
     env_file:
       - .env
 
-    # Conecta este servicio a la red compartida.
+    # Conecta una carpeta de tu equipo con /media dentro del contenedor.
+    # Sirve para mostrar imágenes o archivos sin copiarlos dentro de la app.
+    # :ro significa que solo se pueden leer, no modificar.
+    volumes:
+      - /home/brandon/media:/media:ro
+
+    # Conecta este servicio a la red compartida del backend.
+    # Eso permite que la API hable con otros contenedores si existen.
     networks:
       - red_backend
 
 networks:
-  # Esta red ya existe fuera de este archivo.
+  # Red externa ya creada fuera de este archivo.
+  # Docker no la crea otra vez, solo la usa.
   red_backend:
     external: true
