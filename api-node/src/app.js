@@ -9,6 +9,7 @@
 
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 /*
@@ -43,16 +44,44 @@ app.use(express.json());
 |--------------------------------------------------------------------------
 | STATIC MEDIA
 |--------------------------------------------------------------------------
-| Esta parte NO es una API.
-| Solo sirve archivos de la carpeta media.
-| Ejemplo: http://localhost:3000/media/imagen.png
 */
 
-app.use("/media", express.static("../media"));
+// ❌ VERSION NO RECOMENDABLE (COMENTADA POR QUE NO FUNCIONA BIEN):
+// app.use("/media", express.static("../media"));
+// 
+// ¿Por qué NO es recomendable?
+// - Usa ruta relativa "../media" que depende del directorio actual.
+// - Falla si ejecutas desde otro directorio o dentro de Docker.
+// - No funciona igual en Windows y Linux (barras diferentes).
+// - Inseguro y poco predecible en producción.
+
+// ✅ VERSION RECOMENDADA (ESTA ES LA QUE USAMOS):
+/*
+| Expone la carpeta media para acceder a imagenes y canciones por URL.
+| Usa path.join para crear una ruta absoluta y segura.
+| Funciona igual en Windows, Linux y Docker sin problemas.
+| Ejemplos de acceso:
+| http://localhost:3000/media/avatar/avatar1.png
+| http://localhost:3000/media/musica/cancion1.mp3
+*/
+
+const mediaPath = path.join(__dirname, "../../media");
+
+app.use("/media", express.static(mediaPath));
 
 
 
-
+// Conexion con docker-compose.yml:
+// En docker-compose.yml hay: volumes: - /home/brandon/media:/media:ro
+// Esto conecta /home/brandon/media como /media dentro del contenedor.
+//
+// Como funciona el flujo:
+// 1. Docker-compose monta /home/brandon/media como /media en el contenedor.
+// 2. app.js busca archivos en path.join(__dirname, "../../media")
+// 3. Dentro del contenedor, eso apunta exactamente a /media (donde docker-compose lo conectó).
+// 4. Express sirve esos archivos: http://localhost:3000/media/imagen.png
+// 5. Sin Docker: busca en la carpeta media real de tu proyecto.
+// 6. Con Docker: busca en la carpeta que docker-compose.yml conectó.
 
 
 
