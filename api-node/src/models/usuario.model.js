@@ -4,6 +4,12 @@
 
 const db = require("../config/db");
 
+// N: Model de usuarios
+// N: Este módulo realiza las consultas a la base de datos (CRUD).
+// N: Importante: el campo `contrasena` en la tabla `usuarios` almacena el HASH (bcrypt),
+// N: nunca contraseñas en texto plano. Los controladores usan `password.service` para
+// N: hashear antes de guardar y `comparePassword` para comprobar en login.
+
 // Trae todos los usuarios con datos del avatar
 async function listarUsuarios() {
     const [rows] = await db.query(`
@@ -120,12 +126,15 @@ async function buscarUsuarioPorEmail(email) {
     const [rows] = await db.query(`
         SELECT
             id,
-            email
+            avatar_id,
+            nombre_usuario,
+            email,
+            contrasena
         FROM usuarios
         WHERE email = ?
     `, [email]);
 
-    return rows[0];
+    return rows[0] || null;
 }
 
 module.exports = {

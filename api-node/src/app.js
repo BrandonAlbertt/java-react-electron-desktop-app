@@ -221,46 +221,45 @@ app.listen(PORT, () => {
 ========================================
     `);
 });
-
 /*
-|--------------------------------------------------------------------------
-| LISTA DE ENDPOINTS - REFERENCIA RAPIDA PARA DESARROLLADORES
-|--------------------------------------------------------------------------
-| Copia y pega estas URLs en el navegador (GET) o en Postman (POST/PUT/DELETE)
-| Reemplaza el número (ej: 1, 2, 10) con el ID que quieras consultar/modificar
+|-------------------------------------------------------------------------
+| LISTA DE ENDPOINTS - REFERENCIA RÁPIDA
+|-------------------------------------------------------------------------
+| Copia y pega estas URLs en el navegador (GET) o en Postman (POST/PUT/DELETE).
+| Reemplaza el ID (ej: 1, 2, 10) según corresponda.
 |
-| EXPLORAR (contenido general)
-|   GET http://localhost:3000/api/explorar
+| EXPLORAR (contenido general) - PROTEGIDO
+|   GET    http://localhost:3000/api/explorar
 |
-| BIBLIOTECA (música guardada de un usuario)
-|   GET http://localhost:3000/api/usuarios/1/biblioteca
+| BIBLIOTECA (música guardada de un usuario) - PROTEGIDO
+|   GET    http://localhost:3000/api/usuarios/1/biblioteca
 |
-| AVATARES (fotos de perfil)
+| AVATARES (fotos de perfil) - PÚBLICO
 |   GET    http://localhost:3000/api/avatares
 |   GET    http://localhost:3000/api/avatares/1
 |   POST   http://localhost:3000/api/avatares
 |   PUT    http://localhost:3000/api/avatares/1
 |   DELETE http://localhost:3000/api/avatares/1
 |
-| USUARIOS (rutas de app.js)
-|   GET    http://localhost:3000/api/usuarios
-|   GET    http://localhost:3000/api/usuarios/1
-|   POST   http://localhost:3000/api/usuarios
-|   POST   http://localhost:3000/api/usuarios/login
-|   PUT    http://localhost:3000/api/usuarios/1
-|   DELETE http://localhost:3000/api/usuarios/1
-|   GET    http://localhost:3000/api/usuarios/1/biblioteca
+| USUARIOS
+|   POST   http://localhost:3000/api/usuarios         -> Registrar (PÚBLICO)
+|   POST   http://localhost:3000/api/usuarios/login   -> Login (PÚBLICO)
+|   GET    http://localhost:3000/api/usuarios         -> Listar (PROTEGIDO)
+|   GET    http://localhost:3000/api/usuarios/1       -> Obtener por id (PROTEGIDO)
+|   PUT    http://localhost:3000/api/usuarios/1       -> Editar (PROTEGIDO)
+|   DELETE http://localhost:3000/api/usuarios/1       -> Eliminar (PROTEGIDO)
+|   GET    http://localhost:3000/api/usuarios/1/biblioteca -> Biblioteca (PROTEGIDO)
 |
-| MUSICA (canciones - CRUD COMPLETO)
-|   GET    http://localhost:3000/api/musica (listar todas)
-|   GET    http://localhost:3000/api/musica/1 (obtener por ID)
-|   POST   http://localhost:3000/api/musica (crear - JSON en body)
-|   PUT    http://localhost:3000/api/musica/1 (editar - JSON en body)
-|   DELETE http://localhost:3000/api/musica/1 (eliminar)
+| MUSICA (canciones)
+|   GET    http://localhost:3000/api/musica
+|   GET    http://localhost:3000/api/musica/1
+|   POST   http://localhost:3000/api/musica
+|   PUT    http://localhost:3000/api/musica/1
+|   DELETE http://localhost:3000/api/musica/1
 |
 | PLAYLIST (listas de reproducción)
-|   GET    http://localhost:3000/api/usuarios/1/listas
 |   POST   http://localhost:3000/api/usuarios/1/listas
+|   GET    http://localhost:3000/api/usuarios/1/listas
 |   POST   http://localhost:3000/api/listas/2/canciones/10
 |   DELETE http://localhost:3000/api/listas/2/canciones/10
 |   DELETE http://localhost:3000/api/listas/2
@@ -279,5 +278,7 @@ app.listen(PORT, () => {
 |   PUT    http://localhost:3000/api/generos-musicales/1
 |   DELETE http://localhost:3000/api/generos-musicales/1
 |
-|--------------------------------------------------------------------------
+| NOTA: "PROTEGIDO" indica que la ruta requiere un header
+|       Authorization: Bearer <token> (ver `src/middlewares/auth.middleware.js`).
+|-------------------------------------------------------------------------
 */

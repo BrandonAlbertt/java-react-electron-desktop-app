@@ -1,7 +1,10 @@
-// CONTROLLER DE USUARIOS
-// Relacion: routes -> controller -> model -> BD
-// Aqui se recibe la request, se valida y se responde al cliente
+// N: Importa funciones de cifrado y autenticación
+// N: hashPassword y comparePassword usan bcrypt para cifrar/verificar contraseñas
+const { hashPassword, comparePassword } = require("../services/password.service");
+// N: generateToken crea un JWT firmado con datos del usuario
+const { generateToken } = require("../services/token.service");
 
+// N: usuarioModel conecta con la base de datos y expone funciones CRUD
 const usuarioModel = require("../models/usuario.model");
 
 // GET /api/usuarios
@@ -39,10 +42,11 @@ async function obtenerUsuarioPorId(req, res) {
     }
 }
 
-// POST /api/usuarios
+// N: REGISTRO DE USUARIO
+// N: Recibe datos del usuario, verifica duplicados, cifra la contraseña y guarda en BD
+// N: Al crear el usuario, genera un JWT para autenticación inmediata
 async function crearUsuario(req, res) {
     try {
-        // Los datos llegan en req.body desde Postman o frontend
         const {
             avatar_id,
             nombre_usuario,
@@ -50,35 +54,41 @@ async function crearUsuario(req, res) {
             contrasena,
         } = req.body;
 
-        // Valida que no falte ningun campo
+        // N: Validación de campos obligatorios
         if (!avatar_id || !nombre_usuario || !email || !contrasena) {
             return res.status(400).json({
                 mensaje: "Todos los campos son obligatorios",
             });
         }
 
-        // Revisa si ya existe un usuario con ese email
+        // N: Verifica si el email ya está registrado
         const usuarioExistente = await usuarioModel.buscarUsuarioPorEmail(email);
-
         if (usuarioExistente) {
             return res.status(409).json({
                 mensaje: "El email ya está registrado",
             });
         }
 
-        // Crea el usuario en BD
+        // N: Cifra la contraseña usando bcrypt antes de guardar
+        const contrasenaHash = await hashPassword(contrasena);
+
+        // N: Guarda el usuario en la base de datos con la contraseña cifrada
         const nuevoUsuarioId = await usuarioModel.crearUsuario({
             avatar_id,
             nombre_usuario,
             email,
-            contrasena,
+            contrasena: contrasenaHash,
         });
 
-        // Recupera el usuario completo para devolverlo en la respuesta
+        // N: Obtiene el usuario recién creado (sin contraseña)
         const nuevoUsuario = await usuarioModel.obtenerUsuarioPorId(nuevoUsuarioId);
+
+        // N: Genera un token JWT para el usuario
+        const token = generateToken(nuevoUsuario);
 
         res.status(201).json({
             mensaje: "Usuario creado correctamente",
+            token,
             usuario: nuevoUsuario,
         });
     } catch (error) {
@@ -87,13 +97,14 @@ async function crearUsuario(req, res) {
     }
 }
 
-// PUT /api/usuarios/:id
+// N: EDICIÓN DE USUARIO
+// N: Permite modificar datos y actualiza la contraseña cifrada si se envía
 async function editarUsuario(req, res) {
     try {
-        // Toma el ID de la URL
+        // N: Obtiene el ID del usuario a editar
         const { id } = req.params;
 
-        // Toma los nuevos datos del body
+        // N: Extrae los nuevos datos del body
         const {
             avatar_id,
             nombre_usuario,
@@ -101,37 +112,38 @@ async function editarUsuario(req, res) {
             contrasena,
         } = req.body;
 
-        // Verifica que venga todo completo
+        // N: Valida que todos los campos estén presentes
         if (!avatar_id || !nombre_usuario || !email || !contrasena) {
             return res.status(400).json({
                 mensaje: "Todos los campos son obligatorios",
             });
         }
 
-        // Verifica que el usuario exista antes de editar
+        // N: Verifica que el usuario exista
         const usuarioActual = await usuarioModel.obtenerUsuarioPorId(id);
-
         if (!usuarioActual) {
             return res.status(404).json({
                 mensaje: "Usuario no encontrado",
             });
         }
 
-        // Evita duplicar emails entre usuarios distintos
+        // N: Evita duplicar emails entre usuarios distintos
         const usuarioConEmail = await usuarioModel.buscarUsuarioPorEmail(email);
-
         if (usuarioConEmail && usuarioConEmail.id != id) {
             return res.status(409).json({
                 mensaje: "El email ya está registrado por otro usuario",
             });
         }
 
-        // Ejecuta el UPDATE en BD
+        // N: Cifra la nueva contraseña antes de actualizar
+        const contrasenaHash = await hashPassword(contrasena);
+
+        // N: Actualiza el usuario en la base de datos
         const editado = await usuarioModel.editarUsuario(id, {
             avatar_id,
             nombre_usuario,
             email,
-            contrasena,
+            contrasena: contrasenaHash,
         });
 
         if (!editado) {
@@ -140,6 +152,7 @@ async function editarUsuario(req, res) {
             });
         }
 
+        // N: Devuelve el usuario editado (sin contraseña)
         const usuarioEditado = await usuarioModel.obtenerUsuarioPorId(id);
 
         res.json({
@@ -176,53 +189,55 @@ async function eliminarUsuario(req, res) {
     }
 }
 
-// POST /api/usuarios/login
-// Recibe: email en req.body
-// Busca el usuario por email y devuelve sus datos (incluyendo contraseña)
-// El frontend compara la contraseña internamente
-// En Postman:
-//   Method: POST
-//   URL: http://localhost:3000/api/usuarios/login
-//   Body -> raw -> JSON
-//   {
-//     "email": "juan@mail.com"
-//   }
+// N: LOGIN DE USUARIO
+// N: Recibe email y contraseña, busca el usuario y compara la contraseña cifrada
+// N: Si es correcto, genera y devuelve un JWT para autenticación
 async function loginUsuario(req, res) {
     try {
-        // AQUI SE RECIBE EL EMAIL DEL FRONTEND
-        // req.body contiene el JSON que envió el frontend: { "email": "juan@mail.com" }
-        // Se desestructura para extraer solo el email
-        const { email } = req.body;
+        const { email, contrasena } = req.body;
 
-        // Valida que llegue el email
-        if (!email) {
+        // N: Valida que se envíen email y contraseña
+        if (!email || !contrasena) {
             return res.status(400).json({
-                mensaje: "Email es requerido",
+                mensaje: "Email y contraseña son obligatorios",
             });
         }
 
-        // Busca el usuario por email en BD
+        // N: Busca el usuario por email
         const usuarioBuscado = await usuarioModel.buscarUsuarioPorEmail(email);
-
-        // Si no existe el usuario
         if (!usuarioBuscado) {
-            return res.status(404).json({
-                mensaje: "Usuario no encontrado",
+            return res.status(401).json({
+                mensaje: "Credenciales incorrectas",
             });
         }
 
-        // Obtiene los datos completos del usuario (con avatar y contraseña)
-        const usuarioCompleto = await usuarioModel.obtenerUsuarioPorId(usuarioBuscado.id);
+        // N: Compara la contraseña enviada con el hash guardado usando bcrypt
+        const passwordOk = await comparePassword(
+            contrasena,
+            usuarioBuscado.contrasena
+        );
+        if (!passwordOk) {
+            return res.status(401).json({
+                mensaje: "Credenciales incorrectas",
+            });
+        }
 
-        // Retorna el usuario completo
-        // El frontend recibirá esto y comparará la contraseña internamente
+        // N: Genera un token JWT para el usuario autenticado
+        const token = generateToken(usuarioBuscado);
+
         res.json({
-            mensaje: "Usuario encontrado",
-            usuario: usuarioCompleto,
+            mensaje: "Login correcto",
+            token,
+            usuario: {
+                id: usuarioBuscado.id,
+                avatar_id: usuarioBuscado.avatar_id,
+                nombre_usuario: usuarioBuscado.nombre_usuario,
+                email: usuarioBuscado.email,
+            },
         });
     } catch (error) {
-        console.error("Error al buscar usuario:", error);
-        res.status(500).json({ mensaje: "Error al buscar usuario" });
+        console.error("Error al iniciar sesión:", error);
+        res.status(500).json({ mensaje: "Error al iniciar sesión" });
     }
 }
 
