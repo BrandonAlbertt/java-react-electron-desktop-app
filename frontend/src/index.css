@@ -109,3 +109,19 @@ body {
 .animate-marquee-x {
   animation: marquee-x var(--marquee-duration) ease-in-out infinite;
 }
+
+
+
+
+
+/* SE AGREGO CON LA INTEGRACION DE Welcome.jsx, auth WelcomeScreen.jsx y RegisterForm.jsx
+*/
+.input-style {
+  @apply rounded-full border border-white/30 bg-white/5 px-8 py-4 text-center text-white placeholder:text-white/60 outline-none transition;
+}
+
+.input-style:focus {
+  @apply border-fuchsia-400 shadow-[0_0_18px_rgba(217,70,239,0.45)];
+}
+
+

@@ -1,93 +1,52 @@
+// IMPORTS
+// importaciones necesarias: react para hooks, lucide-react para iconos, framer-motion para animaciones
 import { useEffect, useMemo, useRef } from "react";
+import { ListPlus } from "lucide-react";
+import { motion } from "framer-motion";
 
-/*
-  FavoritesCarousel.jsx
-
-  Este componente representa la barra central superior donde se muestran
-  las listas favoritas en forma de carrusel horizontal.
-
-  Qué puede hacer este componente:
-  - Mostrar varias listas favoritas como círculos con imagen
-  - Mantener siempre visible la lista actualmente seleccionada
-  - Mover el carrusel con la rueda del mouse
-  - Mover el carrusel acercando el cursor a los extremos
-  - Permitir seleccionar una lista con clic
-  - Mostrar un botón para crear una nueva lista
-*/
-
+// COMPONENTO PRINCIPAL
+// componente que renderiza el carrusel de listas favoritas.
+// props: lists (array de listas), activeListId (id de la lista activa),
+// onSelectList (callback al seleccionar), onAddList (callback para el botón)
 export default function FavoritesCarousel({
-    lists,
+    lists = [],
     activeListId,
     onSelectList,
     onAddList,
 }) {
-    /*
-      Referencias internas del componente
-  
-      scrollRef:
-      Guarda una referencia directa al contenedor que se desplaza horizontalmente.
-  
-      targetScrollRef:
-      Guarda la posición final hacia donde queremos mover el carrusel.
-  
-      animationFrameRef:
-      Guarda la animación activa para que el desplazamiento sea suave.
-  
-      hoverDirectionRef:
-      Indica hacia qué lado debe moverse el carrusel automáticamente
-      cuando el cursor se acerca a un extremo.
-      -1 = izquierda
-       1 = derecha
-       0 = detenido
-  
-      hoverSpeedRef:
-      Guarda la velocidad actual del movimiento automático.
-    */
+    // REFERENCIAS Y ESTADO LOCAL (sin estado reactivo)
+    // referencias DOM y valores que persisten entre renderizados
     const scrollRef = useRef(null);
     const targetScrollRef = useRef(0);
     const animationFrameRef = useRef(null);
     const hoverDirectionRef = useRef(0);
     const hoverSpeedRef = useRef(0);
 
-    /*
-      Lista activa actual
-  
-      Aquí buscamos dentro de todas las listas cuál es la que está seleccionada.
-      Esa lista será la que se mostrará grande y resaltada en el centro.
-    */
+    // memoriza la lista activa buscándola por id en el array de listas
     const activeList = useMemo(
         () => lists.find((list) => list.id === activeListId),
         [lists, activeListId]
     );
 
-    /*
-      Animación de desplazamiento suave
-  
-      Esta función mueve poco a poco el carrusel hacia la posición deseada,
-      para que no se vea brusco ni a saltos.
-    */
+    // ANIMACIÓN DE SCROLL
+    // función que realiza el desplazamiento suave hacia targetScrollRef.current
+    // y aplica desplazamiento continuo cuando el ratón está en los bordes
     const animateScroll = () => {
         const container = scrollRef.current;
         if (!container) return;
 
         const current = container.scrollLeft;
-        const target = targetScrollRef.current;
-        const diff = target - current;
+        const diff = targetScrollRef.current - current;
 
         if (Math.abs(diff) < 0.5 && hoverDirectionRef.current === 0) {
-            container.scrollLeft = target;
+            container.scrollLeft = targetScrollRef.current;
             animationFrameRef.current = null;
             return;
         }
 
-        /*
-          Movimiento automático por cercanía del cursor a los extremos
-    
-          Si el cursor está cerca del borde izquierdo o derecho,
-          el carrusel seguirá moviéndose automáticamente.
-        */
         if (hoverDirectionRef.current !== 0) {
             const maxScroll = container.scrollWidth - container.clientWidth;
+
             const nextTarget =
                 targetScrollRef.current +
                 hoverDirectionRef.current * hoverSpeedRef.current;
@@ -95,55 +54,63 @@ export default function FavoritesCarousel({
             targetScrollRef.current = Math.max(0, Math.min(nextTarget, maxScroll));
         }
 
-        container.scrollLeft = current + (targetScrollRef.current - current) * 0.12;
+        container.scrollLeft =
+            current + (targetScrollRef.current - current) * 0.12;
+
         animationFrameRef.current = requestAnimationFrame(animateScroll);
     };
 
-    /*
-      Asegurar que la animación comience
-  
-      Si no hay una animación corriendo, aquí se inicia.
-    */
+    // GESTIÓN DEL FRAME DE ANIMACIÓN
+    // inicia requestAnimationFrame si no hay uno en curso
     const ensureAnimation = () => {
         if (!animationFrameRef.current) {
             animationFrameRef.current = requestAnimationFrame(animateScroll);
         }
     };
 
-    /*
-      Desplazamiento suave manual
-  
-      Esta función define un nuevo destino horizontal para el carrusel.
-      Luego la animación se encarga de llegar hasta allí suavemente.
-    */
+    // INICIAR SCROLL SUAVE
+    // establece el objetivo de desplazamiento y asegura que la animación corra
     const startSmoothScroll = (nextTarget) => {
         const container = scrollRef.current;
         if (!container) return;
 
         const maxScroll = container.scrollWidth - container.clientWidth;
+
         targetScrollRef.current = Math.max(0, Math.min(nextTarget, maxScroll));
+
         ensureAnimation();
     };
 
-    /*
-      Movimiento con la rueda del mouse
-  
-      Cuando el usuario usa la rueda, el carrusel se mueve horizontalmente.
-    */
+    // CENTRAR UN ELEMENTO
+    // calcula la diferencia entre el centro del contenedor y el centro del item
+    // y solicita un desplazamiento suave para colocarlo en el centro
+    const centerItem = (element) => {
+        const container = scrollRef.current;
+        if (!container || !element) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const itemRect = element.getBoundingClientRect();
+
+        const containerCenter = containerRect.left + containerRect.width / 2;
+        const itemCenter = itemRect.left + itemRect.width / 2;
+
+        const diff = itemCenter - containerCenter;
+
+        startSmoothScroll(container.scrollLeft + diff);
+    };
+
+    // MANEJADOR DE WHEEL
+    // intercepta la rueda del ratón para desplazar horizontalmente el carrusel
     const handleWheel = (e) => {
         if (!scrollRef.current) return;
+
         e.preventDefault();
+
         startSmoothScroll(targetScrollRef.current + e.deltaY * 1.15);
     };
 
-    /*
-      Movimiento automático por posición del cursor
-  
-      Si el cursor se acerca al extremo izquierdo o derecho de la barra,
-      el carrusel empieza a desplazarse solo en esa dirección.
-  
-      Mientras más cerca esté el cursor del borde, más rápido se moverá.
-    */
+    // MANEJADOR DE MOUSE MOVE
+    // detecta si el cursor está cerca de los bordes del track para iniciar scroll continuo
     const handleMouseMove = (e) => {
         const container = scrollRef.current;
         if (!container) return;
@@ -152,20 +119,24 @@ export default function FavoritesCarousel({
         const x = e.clientX - rect.left;
         const width = rect.width;
 
-        const edgeZone = 110; // zona sensible en cada extremo
+        const edgeZone = 110;
 
         if (x < edgeZone) {
             const intensity = 1 - x / edgeZone;
+
             hoverDirectionRef.current = -1;
             hoverSpeedRef.current = 3 + intensity * 9;
+
             ensureAnimation();
             return;
         }
 
         if (x > width - edgeZone) {
             const intensity = (x - (width - edgeZone)) / edgeZone;
+
             hoverDirectionRef.current = 1;
             hoverSpeedRef.current = 3 + intensity * 9;
+
             ensureAnimation();
             return;
         }
@@ -174,22 +145,15 @@ export default function FavoritesCarousel({
         hoverSpeedRef.current = 0;
     };
 
-    /*
-      Detener movimiento automático
-  
-      Cuando el cursor sale del carrusel, el movimiento automático se detiene.
-    */
+    // MANEJADOR CUANDO EL MOUSE SALE DEL TRACK
+    // detiene el desplazamiento automático
     const handleMouseLeave = () => {
         hoverDirectionRef.current = 0;
         hoverSpeedRef.current = 0;
     };
 
-    /*
-      Limpieza al desmontar
-  
-      Si el componente se cierra o se deja de usar,
-      cancelamos la animación para evitar errores o consumo innecesario.
-    */
+    // LIMPIEZA AL DESTRUIR
+    // cancela cualquier animation frame pendiente cuando el componente se desmonta
     useEffect(() => {
         return () => {
             if (animationFrameRef.current) {
@@ -198,184 +162,119 @@ export default function FavoritesCarousel({
         };
     }, []);
 
-
-
-    /* EN ESTA PARTE SE RENDERIZA TODO EL COMPONENTE */
-    /* EN ESTA PARTE SE RENDERIZA TODO EL COMPONENTE */
-    /* EN ESTA PARTE SE RENDERIZA TODO EL COMPONENTE */
-
-
-
-
+    // RENDERIZADO
+    // contenedor principal: centra el contenido del header y limita el ancho
     return (
         <div className="flex min-w-0 flex-1 items-center justify-center">
-            <div className="relative w-full max-w-[820px]">
+            <div className="relative w-full max-w-[1020px] px-[92px]">
+                <div className="relative mx-auto w-full max-w-[920px]">
+                    {/* ACTIVE ITEM (IMAGEN CENTRAL) */}
+                    {/* si hay una lista activa, renderiza el avatar grande con animaciones */}
+                    {activeList && (
+                        <motion.div
+                            key={activeList.id}
+                            layoutId={`favorite-list-${activeList.id}`}
+                            className="pointer-events-none absolute left-1/2 top-[-12px] z-40 -translate-x-1/2"
+                            transition={{
+                                type: "spring",
+                                stiffness: 180,
+                                damping: 22,
+                            }}
+                        >
+                            <div className="relative flex items-center justify-center">
+                                {/* fondos y anillos decorativos alrededor de la imagen activa */}
+                                <div className="absolute h-[156px] w-[156px] rounded-full bg-fuchsia-500/10 blur-2xl" />
 
-                {/* 
-          Vista destacada de la lista seleccionada
+                                <div className="absolute h-[146px] w-[146px] rounded-full animate-slow-spin">
+                                    <div className="h-full w-full rounded-full border border-fuchsia-500/25" />
+                                    <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 rounded-full bg-fuchsia-400 shadow-[0_0_22px_rgba(217,70,239,1)]" />
+                                </div>
 
-          Esta es la portada grande que aparece centrada y resaltada.
-          Está separada visualmente del resto para que siempre se mantenga visible.
-        */}
-                {activeList && (
-                    <div
-                        key={activeList.id}
-                        className="pointer-events-none absolute left-1/2 top-[-12px] z-40 -translate-x-1/2 animate-active-pop-in"
-                    >
-                        <div className="relative flex items-center justify-center">
+                                <div className="absolute h-[138px] w-[138px] rounded-full border border-violet-500/20 shadow-[0_0_28px_rgba(139,92,246,0.22)]" />
 
-                            {/* Luz difusa del fondo */}
-                            <div className="absolute h-[156px] w-[156px] rounded-full bg-fuchsia-500/10 blur-2xl" />
-
-                            {/* Aro neon girando lentamente */}
-                            <div className="absolute h-[146px] w-[146px] rounded-full animate-slow-spin">
-                                <div className="h-full w-full rounded-full border border-fuchsia-500/25" />
-                                <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 rounded-full bg-fuchsia-400 shadow-[0_0_22px_rgba(217,70,239,1)]" />
+                                {/* imagen de la lista activa */}
+                                <img
+                                    src={activeList.cover}
+                                    alt={activeList.name}
+                                    className="relative h-32 w-32 rounded-full object-cover ring-2 ring-fuchsia-500/75 shadow-[0_0_34px_rgba(168,85,247,0.38)]"
+                                />
                             </div>
+                        </motion.div>
+                    )}
 
-                            {/* Aro fijo exterior */}
-                            <div className="absolute h-[138px] w-[138px] rounded-full border border-violet-500/20 shadow-[0_0_28px_rgba(139,92,246,0.22)]" />
+                    {/* TRACK DEL CARRUSEL */}
+                    {/* contenedor con fondo y degradados en los laterales para efecto de máscara */}
+                    <div className="relative rounded-[2rem] border border-fuchsia-500/30 bg-black/95 px-4 py-4">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-24 rounded-l-[2rem] bg-gradient-to-r from-[#050507] via-[#050507]/90 to-transparent" />
 
-                            {/* Imagen principal de la lista activa */}
-                            <img
-                                src={activeList.cover}
-                                alt={activeList.name}
-                                className="relative h-32 w-32 rounded-full object-cover ring-2 ring-fuchsia-500/75 shadow-[0_0_34px_rgba(168,85,247,0.38)]"
-                            />
+                        <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-24 rounded-r-[2rem] bg-gradient-to-l from-[#050507] via-[#050507]/90 to-transparent" />
+
+                        {/* BANDA HORIZONTAL SCROLLABLE */}
+                        {/* aquí se mapean las miniaturas; es scrollable horizontalmente */}
+                        <div
+                            ref={scrollRef}
+                            onWheel={handleWheel}
+                            onMouseMove={handleMouseMove}
+                            onMouseLeave={handleMouseLeave}
+                            className="no-scrollbar flex h-[70px] items-center gap-6 overflow-x-auto overflow-y-hidden px-[96px]"
+                        >
+                            {lists.map((list) => {
+                                const isActive = list.id === activeListId;
+
+                                return (
+                                    <motion.button
+                                        key={list.id}
+                                        type="button"
+                                        layoutId={`favorite-list-${list.id}`}
+                                        onClick={(e) => {
+                                            // al clicar, centra el elemento y notifica al padre
+                                            centerItem(e.currentTarget);
+
+                                            setTimeout(() => {
+                                                onSelectList?.(list);
+                                            }, 120);
+                                        }}
+                                        title={list.name}
+                                        className={`group relative shrink-0 transition duration-300 ${isActive
+                                                ? "pointer-events-none opacity-0 scale-75"
+                                                : "scale-100"
+                                            }`}
+                                        whileHover={!isActive ? { scale: 1.1 } : undefined}
+                                        whileTap={!isActive ? { scale: 0.95 } : undefined}
+                                        transition={{
+                                            type: "spring",
+                                            stiffness: 260,
+                                            damping: 20,
+                                        }}
+                                    >
+                                        <span className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-400/15 opacity-0 blur-sm transition duration-300 group-hover:opacity-100" />
+
+                                        {/* miniatura de cada lista */}
+                                        <img
+                                            src={list.cover}
+                                            alt={list.name}
+                                            className="h-20 w-20 rounded-full object-cover opacity-90 transition-all duration-300"
+                                        />
+                                    </motion.button>
+                                );
+                            })}
                         </div>
                     </div>
-                )}
-
-                {/*
-          Nombre de la lista seleccionada
-
-          Esta parte está comentada porque actualmente se decidió no mostrar
-          el nombre debajo del círculo activo.
-        */}
-                {/*
-        {activeList && (
-          <div className="pointer-events-none absolute left-1/2 top-[104px] z-30 -translate-x-1/2">
-            <p className="rounded-full bg-black/72 px-5 py-1 text-xl font-semibold text-white shadow-lg backdrop-blur-sm">
-              {activeList.name}
-            </p>
-          </div>
-        )}
-        */}
-
-                {/*
-          Contenedor visual principal del carrusel
-
-          Aquí vive la barra negra con bordes redondeados donde se desplazan
-          las listas pequeñas.
-        */}
-                <div className="relative rounded-[2rem] border border-fuchsia-500/30 bg-black/95 px-4 py-4">
-
-                    {/* Difuminado del lado izquierdo */}
-                    <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-24 rounded-l-[2rem] bg-gradient-to-r from-[#050507] via-[#050507]/90 to-transparent" />
-
-                    {/* Difuminado del lado derecho */}
-                    <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-24 rounded-r-[2rem] bg-gradient-to-l from-[#050507] via-[#050507]/90 to-transparent" />
-
-                    {/*
-            Zona desplazable horizontal
-
-            Esta es la parte que realmente se mueve cuando el usuario usa
-            la rueda del mouse o acerca el cursor a los extremos.
-          */}
-                    <div
-                        ref={scrollRef}
-                        onWheel={handleWheel}
-                        onMouseMove={handleMouseMove}
-                        onMouseLeave={handleMouseLeave}
-                        className="no-scrollbar flex h-[70px] items-center gap-6 overflow-x-auto overflow-y-hidden px-[96px]"
-                    >
-                        {lists.map((list) => {
-                            const isActive = list.id === activeListId;
-
-                            return (
-                                <button
-                                    key={list.id}
-                                    onClick={() => onSelectList?.(list)}
-                                    className={`group relative shrink-0 transition duration-300 ${isActive
-                                            ? "pointer-events-none opacity-0"
-                                            : "scale-100 hover:scale-110"
-                                        }`}
-                                >
-                                    {/* Brillo suave al pasar el mouse */}
-                                    <span className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-400/15 opacity-0 blur-sm transition duration-300 group-hover:opacity-100" />
-
-                                    {/* Imagen de cada lista */}
-                                    <img
-                                        src={list.cover}
-                                        alt={list.name}
-                                        className="h-20 w-20 rounded-full object-cover opacity-90 transition-all duration-300"
-                                    />
-                                </button>
-                            );
-                        })}
-
-                        {/*
-              Botón para crear una nueva lista favorita
-            */}
-                        <button
-                            onClick={onAddList}
-                            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-dashed border-fuchsia-500/50 bg-[#0c0c12] text-4xl text-fuchsia-400 transition hover:scale-110 hover:bg-[#12121a]"
-                        >
-                            +
-                        </button>
-                    </div>
                 </div>
+
+                {/* BOTÓN AGREGAR / GESTIONAR */}
+                {/* botón posicionado en absoluto a la derecha para no afectar el centrado del track */}
+                <button
+                    type="button"
+                    onClick={onAddList}
+                    title="Gestionar listas"
+                    className="group absolute right-0 top-1/2 flex h-[50px] w-[74px] -translate-y-1/2 items-center justify-center rounded-full border border-dashed border-fuchsia-500/60 bg-[#0c0c12] text-fuchsia-300 shadow-[0_0_28px_rgba(217,70,239,0.22)] transition duration-300 hover:scale-110 hover:border-fuchsia-400 hover:bg-[#12121a] hover:text-fuchsia-200 hover:shadow-[0_0_38px_rgba(217,70,239,0.45)]"
+                >
+                    <span className="absolute inset-0 rounded-full bg-fuchsia-500/10 opacity-0 blur-xl transition duration-300 group-hover:opacity-100" />
+
+                    <ListPlus size={34} strokeWidth={2.2} className="relative z-10" />
+                </button>
             </div>
         </div>
     );
 }
-
-
-/*
-  Estilos y ajustes personalizados que NO pertenecen a Tailwind CSS
-
-  En este archivo se agregan reglas especiales que Tailwind no trae listas
-  como clases directas, o que pertenecen a comportamientos propios de Electron
-  y animaciones personalizadas del proyecto.
-
-  Aquí se encuentran, por ejemplo:
-
-  1. Clases para mover la ventana en Electron
-     - .drag-region
-     - .no-drag
-
-     Estas clases usan la propiedad:
-     -webkit-app-region
-
-     Sirven para definir qué parte de la interfaz permite arrastrar la ventana
-     y qué parte debe seguir siendo interactiva para botones, inputs y clics.
-
-  2. Ocultar barras de scroll nativas
-     - .no-scrollbar
-
-     Esta clase se usa para esconder visualmente la barra del scroll,
-     manteniendo el desplazamiento funcional.
-
-  3. Animaciones personalizadas
-     - @keyframes slow-spin
-     - @keyframes active-pop-in
-     - .animate-slow-spin
-     - .animate-active-pop-in
-
-     Estas animaciones se usan para efectos visuales del carrusel,
-     como el aro neon girando o la entrada suave del elemento activo.
-
-  4. Ajustes globales de la aplicación
-     - html, body, #root
-     - overflow: hidden
-     - box-sizing
-     - fondo general
-
-     Estos estilos ayudan a que la aplicación se comporte como una ventana
-     de escritorio y no como una página web con scroll global.
-
-  En resumen:
-  Tailwind se usa para la mayoría del diseño visual,
-  y este archivo index.css complementa el proyecto con comportamientos
-  especiales, animaciones propias y soporte para Electron.
-*/

@@ -63,10 +63,11 @@ const songs = [
   },
 ];
 
-export default function PlaylistPanel() {
+export default function PlaylistPanel({onOpenAddMusicModal}) {
   // ESTADO DE REPRODUCCIÓN ACTUAL
-  const activeSongId = 1;
-  const isPlaying = true;
+  const [activeSongId, setActiveSongId] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [addedSongIds, setAddedSongIds] = useState([1, 2]);
 
   // REFERENCIA A LA LISTA SCROLLEABLE
   const listRef = useRef(null);
@@ -76,7 +77,25 @@ export default function PlaylistPanel() {
 
   // ACCIÓN AL PRESIONAR PLAY/PAUSA
   const handlePlay = (song) => {
-    console.log("Reproducir o pausar:", song);
+    if (activeSongId === song.id) {
+      setIsPlaying((prev) => !prev);
+      return;
+    }
+
+    setActiveSongId(song.id);
+    setIsPlaying(true);
+  };
+
+  const handleToggleList = (song) => {
+    setAddedSongIds((prev) => {
+      const alreadyAdded = prev.includes(song.id);
+
+      if (alreadyAdded) {
+        return prev.filter((id) => id !== song.id);
+      }
+
+      return [...prev, song.id];
+    });
   };
 
   // ACCIÓN AL ELIMINAR CANCIÓN
@@ -168,6 +187,7 @@ export default function PlaylistPanel() {
                 isPlaying={song.id === activeSongId && isPlaying}
                 onPlay={handlePlay}
                 onRemove={handleRemove}
+                onAddToList={onOpenAddMusicModal}
               />
             ))}
           </div>

@@ -2,46 +2,12 @@ import { useState } from "react";
 import UserProfile from "./UserProfile";
 import FavoritesCarousel from "./FavoritesCarousel";
 import WindowControls from "./WindowControls";
+import UserMenu from "./UserMenu";
 import { favoriteLists } from "../../data/favoriteLists";
 
-/*
-  TopHeader.jsx
+export default function TopHeader({ onOpenAddMusicModal }) {
 
-  Este componente representa toda la barra superior de la aplicación.
-
-  Funcionalidades principales:
-  - Mostrar la información del usuario al lado izquierdo
-  - Mostrar el carrusel de listas favoritas en el centro
-  - Mostrar los controles de ventana al lado derecho
-
-  Componentes que utiliza:
-  - UserProfile.jsx
-  - FavoritesCarousel.jsx
-  - WindowControls.jsx
-
-  Datos que requiere:
-  - favoriteLists.js para renderizar las listas favoritas
-
-  Nota:
-  - Administra la lista favorita actualmente seleccionada
-  - Está preparado para integrarse con Electron
-*/
-/*
-  TopHeader.jsx
-
-  Este componente representa la barra superior de la aplicación.
-
-  Nota importante:
-  Se utiliza la clase personalizada "drag-region" (definida en index.css)
-  para permitir arrastrar la ventana en Electron (frame: false).
-
-  Las zonas interactivas como botones y carrusel usan "no-drag"
-  para evitar conflictos con el arrastre.
-
-  Estas clases no pertenecen a Tailwind CSS.
-*/
-
-export default function TopHeader() {
+    const [menuOpen, setMenuOpen] = useState(false);
     const [lists, setLists] = useState(favoriteLists);
     const [activeList, setActiveList] = useState(favoriteLists[2]);
 
@@ -49,49 +15,44 @@ export default function TopHeader() {
         setActiveList(list);
     };
 
-    const handleAddList = () => {
-        const newList = {
-            id: Date.now(),
-            name: `Nueva Lista ${lists.length + 1}`,
-            cover: "https://i.imgur.com/Nh6G6xG.jpeg",
-        };
+    const handleMinimize = () => console.log("Minimizar");
+    const handleMaximize = () => console.log("Maximizar");
+    const handleClose = () => console.log("Cerrar");
 
-        setLists((prev) => [...prev, newList]);
-    };
-
-    const handleMinimize = () => {
-        console.log("Minimizar ventana");
-    };
-
-    const handleMaximize = () => {
-        console.log("Maximizar ventana");
-    };
-
-    const handleClose = () => {
-        console.log("Cerrar ventana");
+    const toggleMenu = () => {
+        setMenuOpen(prev => !prev);
     };
 
     return (
-        <header className="drag-region flex h-[150px] w-full items-start gap-6 px-6 pt-5">
+        <header className="drag-region relative h-[150px] w-full px-6 pt-5">
 
-            
-            <div className="no-drag">
+            {/* IZQUIERDA */}
+            <div className="no-drag absolute left-6 top-5 z-30">
                 <UserProfile
-                userName="NickName"
-                userImage="https://i.imgur.com/4AiXzf8.jpeg"
+                    userName="NickName"
+                    userImage="https://i.imgur.com/4AiXzf8.jpeg"
+                    onToggleMenu={toggleMenu}
+                />
+
+                <UserMenu
+                    isOpen={menuOpen}
+                    onClose={() => setMenuOpen(false)}
                 />
             </div>
 
-            <div className="no-drag flex-1">
+            {/* CENTRO REAL */}
+            {/* reducir ancho para evitar choque con controles derehos y añadir padding-right pequeño */}
+            <div className="no-drag absolute left-1/2 top-7 z-20 w-[820px] pr-6 -translate-x-1/2">
                 <FavoritesCarousel
                     lists={lists}
                     activeListId={activeList.id}
                     onSelectList={handleSelectList}
-                    onAddList={handleAddList}
+                    onAddList={onOpenAddMusicModal}
                 />
             </div>
 
-            <div className="no-drag">
+            {/* DERECHA */}
+            <div className="no-drag absolute right-6 top-3 z-30">
                 <WindowControls
                     onMinimize={handleMinimize}
                     onMaximize={handleMaximize}

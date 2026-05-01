@@ -246,6 +246,7 @@ app.listen(PORT, () => {
 |   GET    http://localhost:3000/api/usuarios
 |   GET    http://localhost:3000/api/usuarios/1
 |   POST   http://localhost:3000/api/usuarios
+|   POST   http://localhost:3000/api/usuarios/login
 |   PUT    http://localhost:3000/api/usuarios/1
 |   DELETE http://localhost:3000/api/usuarios/1
 |   GET    http://localhost:3000/api/usuarios/1/biblioteca

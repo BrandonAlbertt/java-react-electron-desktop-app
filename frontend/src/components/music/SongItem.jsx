@@ -2,48 +2,72 @@ import MarqueeText from "./MarqueeText";
 
 /*
  * SongItem.jsx
- * Renderiza una canción dentro de la lista con controles y datos básicos.
+ *
+ * Este componente NO decide qué canción está sonando.
+ * Solo recibe estados desde el padre:
+ *
+ * isActive  = esta canción es la seleccionada
+ * isPlaying = esta canción está reproduciéndose
+ * isAdded   = esta canción ya está agregada a la lista
+ *
+ * Botón play:
+ * - Si no está activa, la reproduce
+ * - Si está activa y sonando, la pausa
+ *
+ * Botón + / X:
+ * - Si isAdded es false, muestra +
+ * - Si isAdded es true, muestra X
  */
 export default function SongItem({
   song,
   isActive = false,
   isPlaying = false,
+  isAdded = false,
   onPlay,
-  onRemove,
+  onToggleList,
 }) {
   return (
     <div
       className={`
-        flex items-center gap-2 rounded-full px-2.5 py-1 transition-all duration-300
-        sm:gap-3 sm:px-4 sm:py-2
-        ${
-          isActive
-            ? "scale-[1.01] border border-fuchsia-500/45 bg-[#111117] shadow-[0_0_22px_rgba(168,85,247,0.28)]"
-            : "scale-[0.985] bg-black hover:scale-[0.99] hover:bg-[#0d0d12]"
+        group flex items-center gap-2 rounded-full px-2.5 py-1.5
+        transition-all duration-300 sm:gap-3 sm:px-4 sm:py-2
+        ${isActive
+          ? "scale-[1.01] border border-fuchsia-500/45 bg-[#12121a] shadow-[0_0_24px_rgba(168,85,247,0.30)]"
+          : "scale-[0.985] border border-white/5 bg-black/85 hover:scale-[0.995] hover:border-fuchsia-500/25 hover:bg-[#0d0d12]"
         }
       `}
     >
-      {/* 1) Botón Play / Pausa */}
+      {/* BOTÓN PLAY / PAUSE */}
       <button
+        type="button"
         onClick={() => onPlay?.(song)}
+        title={isPlaying ? "Pausar canción" : "Reproducir canción"}
         className={`
-          flex shrink-0 items-center justify-center rounded-full text-white transition hover:scale-105
-          ${isActive ? "h-9 w-9 sm:h-10 sm:w-10" : "h-8 w-8 sm:h-9 sm:w-9"}
+          flex shrink-0 items-center justify-center rounded-full border
+          transition-all duration-300 hover:scale-110
+          ${isActive
+            ? "h-9 w-9 border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100 shadow-[0_0_16px_rgba(217,70,239,0.25)] sm:h-10 sm:w-10"
+            : "h-8 w-8 border-white/10 bg-white/5 text-white/90 hover:border-fuchsia-400/35 hover:bg-fuchsia-500/10 sm:h-9 sm:w-9"
+          }
         `}
       >
         {isPlaying ? (
-          <span className="text-[1.7rem] leading-none sm:text-[1.95rem]">❚❚</span>
+          <span className="text-[1.25rem] leading-none sm:text-[1.45rem]">
+            ❚❚
+          </span>
         ) : (
-          <span className="text-[1.7rem] leading-none sm:text-[1.95rem]">▶</span>
+          <span className="translate-x-[1px] text-[1.25rem] leading-none sm:text-[1.45rem]">
+            ▶
+          </span>
         )}
       </button>
 
-      {/* 2) Portada de la canción (con glow si está activa) */}
+      {/* PORTADA */}
       <div className="relative shrink-0">
         {isActive && (
           <>
-            <div className="absolute inset-0 rounded-full bg-fuchsia-500/20 blur-md" />
-            <div className="absolute inset-0 rounded-full border border-fuchsia-500/35 shadow-[0_0_18px_rgba(217,70,239,0.35)]" />
+            <div className="absolute inset-0 rounded-full bg-fuchsia-500/25 blur-md" />
+            <div className="absolute inset-0 rounded-full border border-fuchsia-400/40 shadow-[0_0_18px_rgba(217,70,239,0.35)]" />
           </>
         )}
 
@@ -52,41 +76,53 @@ export default function SongItem({
           alt={song.title}
           className={`
             relative rounded-full object-cover transition-all duration-300
-            ${
-              isActive
-                ? "h-9 w-9 ring-2 ring-fuchsia-500/35 sm:h-11 sm:w-11"
-                : "h-9 w-9 sm:h-10 sm:w-10"
+            ${isActive
+              ? "h-10 w-10 ring-2 ring-fuchsia-400/40 sm:h-11 sm:w-11"
+              : "h-9 w-9 ring-1 ring-white/10 group-hover:ring-fuchsia-400/25 sm:h-10 sm:w-10"
             }
           `}
         />
       </div>
 
-      {/* 3) Texto: título y artista (con Marquee) */}
+      {/* TEXTO */}
       <div className="min-w-0 flex-1">
         <MarqueeText
           text={song.title}
-          className="text-[clamp(0.72rem,1.45vw,1.18rem)] font-bold leading-tight text-white"
+          className={`
+            text-[clamp(0.74rem,1.45vw,1.12rem)] font-bold leading-tight
+            ${isActive ? "text-white" : "text-white/90"}
+          `}
           speed={14}
         />
 
         <MarqueeText
           text={song.artist}
-          className="text-[clamp(0.62rem,1.1vw,0.88rem)] leading-tight text-white/70"
+          className="text-[clamp(0.62rem,1.1vw,0.86rem)] leading-tight text-white/55"
           speed={13}
         />
       </div>
 
-      {/* 4) Duración */}
-      <span className="shrink-0 pl-1 text-[clamp(0.78rem,1.6vw,1.12rem)] text-white/80 sm:pl-2">
+      {/* DURACIÓN */}
+      <span className="hidden shrink-0 pl-1 text-[clamp(0.74rem,1.4vw,1rem)] text-white/60 sm:block sm:pl-2">
         {song.duration}
       </span>
 
-      {/* 5) Botón eliminar */}
+      {/* BOTÓN ÚNICO: + O X */}
       <button
-        onClick={() => onRemove?.(song.id)}
-        className="ml-1 shrink-0 text-[clamp(1.15rem,2.4vw,1.9rem)] font-bold leading-none text-red-500 transition hover:scale-110 hover:text-red-400"
+        type="button"
+        onClick={() => onToggleList?.(song)}
+        title={isAdded ? "Eliminar de la lista" : "Agregar a la lista"}
+        className={`
+          flex h-8 w-8 shrink-0 items-center justify-center rounded-full
+          border text-[1.2rem] font-bold leading-none
+          transition-all duration-300 hover:scale-110
+          ${isAdded
+            ? "border-red-500/25 bg-red-500/5 text-red-500 hover:border-red-400/40 hover:bg-red-500/10 hover:text-red-400"
+            : "border-green-400/20 bg-green-400/5 text-green-400 hover:border-green-300/40 hover:bg-green-400/10 hover:text-green-300"
+          }
+        `}
       >
-        X
+        {isAdded ? "X" : "+"}
       </button>
     </div>
   );

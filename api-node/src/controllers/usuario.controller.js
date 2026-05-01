@@ -176,10 +176,61 @@ async function eliminarUsuario(req, res) {
     }
 }
 
+// POST /api/usuarios/login
+// Recibe: email en req.body
+// Busca el usuario por email y devuelve sus datos (incluyendo contraseña)
+// El frontend compara la contraseña internamente
+// En Postman:
+//   Method: POST
+//   URL: http://localhost:3000/api/usuarios/login
+//   Body -> raw -> JSON
+//   {
+//     "email": "juan@mail.com"
+//   }
+async function loginUsuario(req, res) {
+    try {
+        // AQUI SE RECIBE EL EMAIL DEL FRONTEND
+        // req.body contiene el JSON que envió el frontend: { "email": "juan@mail.com" }
+        // Se desestructura para extraer solo el email
+        const { email } = req.body;
+
+        // Valida que llegue el email
+        if (!email) {
+            return res.status(400).json({
+                mensaje: "Email es requerido",
+            });
+        }
+
+        // Busca el usuario por email en BD
+        const usuarioBuscado = await usuarioModel.buscarUsuarioPorEmail(email);
+
+        // Si no existe el usuario
+        if (!usuarioBuscado) {
+            return res.status(404).json({
+                mensaje: "Usuario no encontrado",
+            });
+        }
+
+        // Obtiene los datos completos del usuario (con avatar y contraseña)
+        const usuarioCompleto = await usuarioModel.obtenerUsuarioPorId(usuarioBuscado.id);
+
+        // Retorna el usuario completo
+        // El frontend recibirá esto y comparará la contraseña internamente
+        res.json({
+            mensaje: "Usuario encontrado",
+            usuario: usuarioCompleto,
+        });
+    } catch (error) {
+        console.error("Error al buscar usuario:", error);
+        res.status(500).json({ mensaje: "Error al buscar usuario" });
+    }
+}
+
 module.exports = {
     listarUsuarios,
     obtenerUsuarioPorId,
     crearUsuario,
     editarUsuario,
     eliminarUsuario,
+    loginUsuario,
 };
