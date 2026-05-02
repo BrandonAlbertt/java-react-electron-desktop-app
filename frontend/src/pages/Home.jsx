@@ -11,7 +11,7 @@ import AppModal from "../components/layout/AppModal";
 
 import { useBiblioteca } from "../hooks/useBiblioteca";
 
-export default function Home() {
+export default function Home({usuario, onLogout}) {
     useBiblioteca(1);
     // 🔹 useState crea un "estado" dentro del componente.
     // modalType = valor actual del estado
@@ -54,7 +54,10 @@ export default function Home() {
             <div className="flex h-full w-full flex-col">
 
                 {/* HEADER SUPERIOR */}
-                <TopHeader onOpenAddMusicModal={openGestionListaModal} />
+                <TopHeader
+                    usuario={usuario}
+                    onLogout={onLogout}
+                    onOpenAddMusicModal={openGestionListaModal} />
 
                 {/* CONTENIDO CENTRAL */}
                 <div className="flex-1 overflow-hidden p-3 md:p-4">

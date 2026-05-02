@@ -1,11 +1,47 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+// Son componentes (ventanas) home y welcome (login/registro)
 import Home from "./pages/Home";
 import Welcome from "./pages/Welcome";
 
+// N: Componente raíz de la aplicación
+// N: Controla el estado de autenticación y muestra Welcome o Home.
+// N: Usa localStorage para persistir sesión entre recargas.
+// N: Aplica animaciones suaves al cambiar entre vistas con Framer Motion.
 function App() {
+  // ESTADOS DE AUTENTICACIÓN
   const [isLogged, setIsLogged] = useState(false);
+  const [usuario, setUsuario] = useState(null);
+
+  // Al cargar la app, revisar si hay token y usuario guardados en localStorage
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const usuarioGuardado = localStorage.getItem("usuario");
+
+    if (token && usuarioGuardado) {
+      setUsuario(JSON.parse(usuarioGuardado));
+      setIsLogged(true);
+    }
+  }, []);
+
+  // Funciones para manejar login y logout / y guarda en localStorage para persistencia de sesión
+  const handleLogin = ({ token, usuario }) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("usuario", JSON.stringify(usuario));
+
+    setUsuario(usuario);
+    setIsLogged(true);
+  };
+
+  // Al hacer logout, limpiar localStorage y resetear estados
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+
+    setUsuario(null);
+    setIsLogged(false);
+  };
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#050507] text-white">
@@ -19,7 +55,7 @@ function App() {
             exit={{ opacity: 0, scale: 0.98, filter: "blur(10px)" }}
             transition={{ duration: 0.45, ease: "easeInOut" }}
           >
-            <Welcome onLogin={() => setIsLogged(true)} />
+            <Welcome onLogin={handleLogin} />
           </motion.div>
         ) : (
           <motion.div
@@ -30,7 +66,7 @@ function App() {
             exit={{ opacity: 0, scale: 0.98, filter: "blur(10px)" }}
             transition={{ duration: 0.55, ease: "easeInOut" }}
           >
-            <Home />
+            <Home usuario={usuario} onLogout={handleLogout} />
           </motion.div>
         )}
       </AnimatePresence>

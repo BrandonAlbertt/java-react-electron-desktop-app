@@ -21,6 +21,20 @@ const axiosClient = axios.create({
     },
 });
 
+
+// Este interceptor se ejecuta antes de cada petición.
+// Si hay token guardado, lo agrega.
+// Si no hay token, no agrega nada.
+axiosClient.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+});
+
 // Exportamos este cliente para reutilizarlo en otros archivos del proyecto.
 // Asi todos usan la misma configuracion y se evitan errores por diferencias.
 export default axiosClient;

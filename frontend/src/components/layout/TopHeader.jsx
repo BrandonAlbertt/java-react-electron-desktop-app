@@ -5,7 +5,7 @@ import WindowControls from "./WindowControls";
 import UserMenu from "./UserMenu";
 import { favoriteLists } from "../../data/favoriteLists";
 
-export default function TopHeader({ onOpenAddMusicModal }) {
+export default function TopHeader({ onOpenAddMusicModal, usuario, onLogout}) {
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [lists, setLists] = useState(favoriteLists);
@@ -29,12 +29,13 @@ export default function TopHeader({ onOpenAddMusicModal }) {
             {/* IZQUIERDA */}
             <div className="no-drag absolute left-6 top-5 z-30">
                 <UserProfile
-                    userName="NickName"
-                    userImage="https://i.imgur.com/4AiXzf8.jpeg"
+                    userName={usuario.nombre}
+                    userImage={usuario.avatar}
                     onToggleMenu={toggleMenu}
                 />
 
                 <UserMenu
+                    onLogout={onLogout}
                     isOpen={menuOpen}
                     onClose={() => setMenuOpen(false)}
                 />

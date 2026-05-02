@@ -1,13 +1,34 @@
 import { useState } from "react";
+import { useUsuario } from "../../hooks/useUsuario";
 
 export default function LoginForm({ onBack, onLogin, onGoRegister }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
+    const {
+        iniciarSesion,
+        loading,
+        error,
+    } = useUsuario();
+
+    const handleSubmit = async () => {
+        try {
+            const response = await iniciarSesion({
+                email,
+                contrasena: password,
+            });
+
+            // response trae: { mensaje, token, usuario }
+            // Se manda a App.jsx para cambiar a Home
+            onLogin(response);
+        } catch (error) {
+            // El error ya lo maneja el hook
+            console.error("Error en LoginForm:", error);
+        }
+    };
+
     return (
         <div className="flex w-full max-w-[500px] flex-col items-center gap-10">
-
-            {/* Título */}
             <button
                 onClick={onBack}
                 className="
@@ -19,7 +40,6 @@ export default function LoginForm({ onBack, onLogin, onGoRegister }) {
                 musicBH
             </button>
 
-            {/* Inputs */}
             <div className="flex w-full flex-col gap-6">
                 <input
                     placeholder="correo@user.com"
@@ -37,20 +57,25 @@ export default function LoginForm({ onBack, onLogin, onGoRegister }) {
                 />
             </div>
 
-            {/* Botón login */}
+            {error && (
+                <p className="text-sm text-red-400">
+                    {error}
+                </p>
+            )}
+
             <button
-                onClick={() => onLogin({ email, password })}
+                onClick={handleSubmit}
+                disabled={loading}
                 className="
-                rounded-full border border-fuchsia-400 bg-black
-                px-16 py-3 text-white font-bold
-                shadow-[0_0_25px_rgba(217,70,239,0.9)]
-                hover:scale-105 transition
+                    rounded-full border border-fuchsia-400 bg-black
+                    px-16 py-3 text-white font-bold
+                    shadow-[0_0_25px_rgba(217,70,239,0.9)]
+                    hover:scale-105 transition disabled:opacity-50
                 "
             >
-                Iniciar sesión
+                {loading ? "Ingresando..." : "Iniciar sesión"}
             </button>
 
-            {/* Ir a registro */}
             <button
                 onClick={onGoRegister}
                 className="text-white/60 hover:text-white transition text-sm"

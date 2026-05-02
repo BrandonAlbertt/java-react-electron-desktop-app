@@ -144,3 +144,12 @@ export async function eliminarUsuario(usuarioId) {
     const response = await axiosClient.delete(`/api/usuarios/${usuarioId}`);
     return response.data;
 }
+
+
+export async function loginUsuario(data) {
+    // API CONNECTION: POST /api/usuarios/login
+    // SENDS: { email, contrasena }
+    // RETURNS: { mensaje, token, usuario }
+    const response = await axiosClient.post("/api/usuarios/login", data);
+    return response.data;
+}
