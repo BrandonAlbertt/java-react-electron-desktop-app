@@ -18,6 +18,11 @@ export default function LoginForm({ onBack, onLogin, onGoRegister }) {
                 contrasena: password,
             });
 
+            // mostrar en consola la respuesta del login
+            console.log("llave: ", response.token);
+            console.log("mensaje: ", response.mensaje);
+            console.log("usuario id: ", response.usuario.id);
+   
             // response trae: { mensaje, token, usuario }
             // Se manda a App.jsx para cambiar a Home
             onLogin(response);

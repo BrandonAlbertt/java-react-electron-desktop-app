@@ -24,6 +24,7 @@ async function obtenerBibliotecaPorUsuario(usuarioId) {
 
             m.id AS musica_id,
             m.titulo,
+            m.letra,
             m.link_audio,
             m.duracion_segundos,
 
@@ -57,6 +58,7 @@ async function obtenerBibliotecaPorUsuario(usuarioId) {
             l.url_imagen,
             m.id,
             m.titulo,
+            m.letra,
             m.link_audio,
             m.duracion_segundos,
             g.nombre,
@@ -64,6 +66,7 @@ async function obtenerBibliotecaPorUsuario(usuarioId) {
 
         ORDER BY l.nombre ASC, m.titulo ASC
     `, [usuarioId]);
+
 
     return rows;
 }

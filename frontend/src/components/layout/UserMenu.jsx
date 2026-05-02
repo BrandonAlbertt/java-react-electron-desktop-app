@@ -20,7 +20,6 @@ export default function UserMenu({ isOpen, onClose, onLogout }) {
             <button 
                 onClick={onLogout}
                 className="w-full flex items-center gap-2 px-4 py-2 rounded-full bg-transparent hover:bg-red-500/20 transition mt-2"
-                onClick={onClose}
             >
                 <span className="w-2 h-2 bg-pink-500 rounded-full"></span>
                 Cerrar sesion

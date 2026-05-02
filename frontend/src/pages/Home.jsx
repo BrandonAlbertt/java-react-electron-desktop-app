@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import PlayerBar from "../components/layout/PlayerBar";
 import PlaylistPanel from "../components/music/PlaylistPanel";
@@ -12,30 +12,71 @@ import AppModal from "../components/layout/AppModal";
 import { useBiblioteca } from "../hooks/useBiblioteca";
 
 export default function Home({usuario, onLogout}) {
-    useBiblioteca(1);
-    // 🔹 useState crea un "estado" dentro del componente.
-    // modalType = valor actual del estado
-    // setModalType = función para cambiar ese valor
-    // Empieza en null (no hay modal abierto)
+    // =============================
+    // ESTADOS PRINCIPALES
+    // =============================
+    // Datos de usuario y biblioteca
+    const usuarioId = usuario?.id;
+    const {
+        usuario: usuarioCompleto, //por conflicto de nombres, se renombra a usuarioCompleto
+        listas,
+        canciones,
+        loading,
+        error
+    } = useBiblioteca(usuarioId);
+
+    // Estado global de la canción seleccionada
+    const [cancionActiva, setCancionActiva] = useState(null);
+    // estado de la cancion selecionada
+    const [isPlaying, setIsPlaying] = useState(false);
+    // Estado de la lista seleccionada
+    const [listaSeleccionadaId, setListaSeleccionadaId] = useState(null);
+    // Estado del modal y canción seleccionada para el modal
     const [modalType, setModalType] = useState(null);
     const [selectedSong, setSelectedSong] = useState(null);
 
-    // 🔹 Esta función CAMBIA el estado
-    // Antes: modalType = null
-    // Después: modalType = "addMusic"
-    // Esto es como "enviar una señal"
+    // =============================
+    // MEMOS DERIVADOS
+    // =============================
+    // Obtener la lista seleccionada a partir del id
+    const listaSeleccionada = useMemo(() => {
+        return listas.find((lista) => lista.id === listaSeleccionadaId) || null;
+    }, [listas, listaSeleccionadaId]);
+
+    // =============================
+    // FUNCIONES Y EVENTOS AGRUPADOS
+    // =============================
+    // Selección de canción
+    const handleSeleccionarCancion = (song) => {
+        // Si la canción seleccionada es la misma que la activa, solo alternar play/pause
+        if (cancionActiva?.id === song.id) {
+            // Alternar estado de reproducción
+            setIsPlaying((prev) => !prev);
+            return;
+        }
+        setCancionActiva(song);
+        setIsPlaying(true);
+    };
+
+    // Selección de lista
+    const handleSeleccionarLista = (listaId) => {
+        console.log("ID de la lista que recibido en Home:", listaId);
+        setListaSeleccionadaId(listaId);
+    };
+
+    // Abrir modal para gestionar listas
     const openGestionListaModal = () => {
         setSelectedSong(null);
         setModalType("gestionarListas");
     };
 
+    // Abrir modal para agregar música a una lista
     const openAddMusicModal = (song) => {
         setSelectedSong(song);
         setModalType("addMusicList");
-    }
+    };
 
-    // 🔹 Esta función vuelve a dejar el estado en null
-    // Eso hace que el modal desaparezca
+    // Cerrar cualquier modal
     const closeModal = () => {
         setModalType(null);
         setSelectedSong(null);
@@ -55,8 +96,11 @@ export default function Home({usuario, onLogout}) {
 
                 {/* HEADER SUPERIOR */}
                 <TopHeader
-                    usuario={usuario}
+                    listas={listas}
+                    usuarioPerfil={usuarioCompleto}
                     onLogout={onLogout}
+                    listaSeleccionadaId={listaSeleccionadaId}
+                    onSeleccionarLista={handleSeleccionarLista}
                     onOpenAddMusicModal={openGestionListaModal} />
 
                 {/* CONTENIDO CENTRAL */}
@@ -64,11 +108,19 @@ export default function Home({usuario, onLogout}) {
                     <div className="grid h-full grid-cols-12 gap-3 md:gap-4">
 
                         <aside className="col-span-12 min-h-0 rounded-2xl border border-fuchsia-500/20 bg-[#0a0a0f] lg:col-span-4">
-                            <PlaylistPanel />
+                            <PlaylistPanel
+                                onSeleccionarCancion={handleSeleccionarCancion}
+                                lista={listaSeleccionada}
+                                cancionActivaId={cancionActiva?.id}
+                                isPlaying={isPlaying}
+                            />
                         </aside>
 
                         <section className="col-span-12 min-h-0 lg:col-span-3">
-                            <NowPlayingPanel />
+                            <NowPlayingPanel
+                                cancion={cancionActiva}
+                                isPlaying={isPlaying}
+                            />
                         </section>
 
                         <aside className="col-span-12 flex flex-col gap-2 min-h-0 lg:col-span-5">

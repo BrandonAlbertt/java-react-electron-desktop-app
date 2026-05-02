@@ -31,6 +31,7 @@ async function obtenerBiblioteca(req, res) {
                 listasMap.get(row.lista_id).canciones.push({
                     id: row.musica_id,
                     titulo: row.titulo,
+                    letra: row.letra,
                     grupo: row.grupo,
                     imagen_grupo: row.imagen_grupo,
                     link_audio: row.link_audio,

@@ -1,4 +1,4 @@
-export const favoriteLists = [
+export const listasFavoritas = [
     {
         id: 1,
         name: "Lista Favorita 1",
