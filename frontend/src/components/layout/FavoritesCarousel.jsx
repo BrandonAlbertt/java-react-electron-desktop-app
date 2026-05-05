@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 
 export default function FavoritesCarousel({
     listas = [],
-    activeListaId,
-    onSelectLista,
-    onAddLista,
+    listaSeleccionadaId,
+    onSeleccionarLista,
+    onAbrirGestionListas,
 }) {
     // =========================================================
     // ===== REFERENCIAS DEL CARRUSEL ==========================
@@ -25,13 +25,13 @@ export default function FavoritesCarousel({
     // =========================================================
     // obtiene la lista activa que se mostrará al centro
     const listaActiva = useMemo(() => {
-        return listas.find((lista) => lista.id === activeListaId);
-    }, [listas, activeListaId]);
+        return listas.find((lista) => lista.id === listaSeleccionadaId);
+    }, [listas, listaSeleccionadaId]);
 
     // obtiene las listas que se mostrarán en el carrusel lateral
     const listasDelCarousel = useMemo(() => {
-        return listas.filter((lista) => lista.id !== activeListaId);
-    }, [listas, activeListaId]);
+        return listas.filter((lista) => lista.id !== listaSeleccionadaId);
+    }, [listas, listaSeleccionadaId]);
 
     // =========================================================
     // ===== FUNCIONES DE ANIMACIÓN DEL SCROLL =================
@@ -148,9 +148,9 @@ export default function FavoritesCarousel({
     };
 
     // selecciona una lista y la centra en el carrusel
-    const handleSelectLista = (e, lista) => {
+    const handleSeleccionarLista = (e, lista) => {
         centerItem(e.currentTarget);
-        onSelectLista?.(lista);
+        onSeleccionarLista?.(lista.id);
     };
 
     // =========================================================
@@ -222,7 +222,7 @@ export default function FavoritesCarousel({
                                         key={lista.id}
                                         type="button"
                                         layoutId={`lista-${lista.id}`}
-                                        onClick={(e) => handleSelectLista(e, lista)}
+                                        onClick={(e) => handleSeleccionarLista(e, lista)}
                                         title={lista.nombre}
                                         className="group relative shrink-0 scale-100 opacity-90 transition duration-300 hover:opacity-100"
                                         whileHover={{ scale: 1.15 }}
@@ -250,7 +250,7 @@ export default function FavoritesCarousel({
                 {/* botón para gestionar listas */}
                 <button
                     type="button"
-                    onClick={onAddLista}
+                    onClick={onAbrirGestionListas}
                     title="Gestionar listas"
                     className="group absolute right-0 top-1/2 flex h-[50px] w-[74px] -translate-y-1/2 items-center justify-center rounded-full border border-dashed border-fuchsia-500/60 bg-[#0c0c12] text-fuchsia-300 shadow-[0_0_28px_rgba(217,70,239,0.22)] transition duration-300 hover:scale-110 hover:border-fuchsia-400 hover:bg-[#12121a] hover:text-fuchsia-200 hover:shadow-[0_0_38px_rgba(217,70,239,0.45)]"
                 >

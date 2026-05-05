@@ -5,7 +5,7 @@ export default function SongItem({
   isActive = false,
   isPlaying = false,
   isAdded = false,
-  onPlay,
+  onSeleccionarCancion,
   onToggleList,
 }) {
 
@@ -33,7 +33,7 @@ export default function SongItem({
       {/* PLAY */}
       <button
         type="button"
-        onClick={() => onPlay?.(song)}
+        onClick={() => onSeleccionarCancion?.(song)}
         className={`flex shrink-0 items-center justify-center rounded-full border transition-all duration-300 hover:scale-110
           ${isActive
             ? "h-9 w-9 border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100"

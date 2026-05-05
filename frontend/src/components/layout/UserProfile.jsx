@@ -10,7 +10,7 @@
   - El nombre y estado se adaptan al espacio disponible sin ocupar más de lo necesario
 */
 
-export default function UserProfile({ userName, userImage, onToggleMenu }) {
+export default function UserProfile({ usuarioNombre, usuarioAvatar, onToggleMenu }) {
   return (
     <>
       {/* Contenedor principal: se adapta con clamp() */}
@@ -57,8 +57,8 @@ export default function UserProfile({ userName, userImage, onToggleMenu }) {
 
           {/* Imagen: cambia de tamaño según la pantalla */}
           <img
-            src={userImage}
-            alt={userName}
+            src={usuarioAvatar}
+            alt={usuarioNombre}
             className="
               relative rounded-full object-cover
               h-[clamp(56px,4.4vw,78px)]
@@ -90,7 +90,7 @@ export default function UserProfile({ userName, userImage, onToggleMenu }) {
               text-[clamp(1.05rem,1.4vw,1.45rem)]
             "
           >
-            {userName}
+            {usuarioNombre}
           </p>
 
           {/* Estado: tamaño menor que el nombre */}

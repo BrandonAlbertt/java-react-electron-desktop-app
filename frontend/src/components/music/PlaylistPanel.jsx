@@ -10,7 +10,6 @@ import { normalizeSong } from "../../utils/normalizeSong";
 // COMPONENTE PRINCIPAL
 // ===============================
 export default function PlaylistPanel({
-  onOpenAddMusicModal,
   lista,
   onSeleccionarCancion,
   isPlaying,
@@ -30,9 +29,9 @@ export default function PlaylistPanel({
   // HANDLERS Y FUNCIONES DE EVENTOS
   // ===============================
   // reproducir canción seleccionada
-  const handlePlay = (song) => {
+  const handleSeleccionarCancion = (cancion) => {
     // ENVIAR AL HOME
-    onSeleccionarCancion?.(song);
+    onSeleccionarCancion?.(cancion);
   };
 
   // agregar o quitar canción de la lista local
@@ -46,10 +45,6 @@ export default function PlaylistPanel({
     });
   };
 
-  // eliminar canción (solo log)
-  const handleRemove = (id) => {
-    console.log("Eliminar canción:", id);
-  };
 
   // verifica si hay más contenido abajo para mostrar flecha
   const checkScrollState = () => {
@@ -138,10 +133,8 @@ export default function PlaylistPanel({
                   isActive={song.id === cancionActivaId && origenReproduccion === "PlaylistPanel"}
                   isPlaying={song.id === cancionActivaId && origenReproduccion === "PlaylistPanel" && isPlaying}
                   isAdded={addedSongIds.includes(song.id)}
-                  onPlay={handlePlay}
-                  onRemove={handleRemove}
+                  onSeleccionarCancion={handleSeleccionarCancion}
                   onToggleList={handleToggleList}
-                  onAddToList={onOpenAddMusicModal}
                 />
               );
             })}

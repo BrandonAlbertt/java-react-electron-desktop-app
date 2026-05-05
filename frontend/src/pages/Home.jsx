@@ -9,7 +9,7 @@ import NowPlayingPanel from "../components/music/NowPlayingPanel";
 import ExplorePanel from "../components/music/ExplorePanel";
 import TopHeader from "../components/layout/TopHeader";
 import CarouselGeneres from "../components/music/CarouselGeneres";
-import AppModal from "../components/layout/AppModal";
+import ModalFavoritos from "../components/modals/ModalFavoritos";
 import { useBiblioteca } from "../hooks/useBiblioteca";
 import { useExplorar } from "../hooks/useExplorar";
 
@@ -67,19 +67,19 @@ export default function Home({ usuario, onLogout }) {
     };
 
     // abre modal para gestionar listas
-    const openGestionListaModal = () => {
+    const handleAbrirGestionListas = () => {
         setSelectedSong(null);
         setModalType("gestionarListas");
     };
 
     // abre modal para agregar musica a lista
-    const openAddMusicModal = (song) => {
-        setSelectedSong(song);
+    const handleAbrirAgregarCancion = (cancion) => {
+        setSelectedSong(cancion);
         setModalType("addMusicList");
     };
 
     // cierra cualquier modal
-    const closeModal = () => {
+    const handleCerrarModal = () => {
         setModalType(null);
         setSelectedSong(null);
     };
@@ -263,7 +263,7 @@ export default function Home({ usuario, onLogout }) {
                     onLogout={onLogout}
                     listaSeleccionadaId={listaSeleccionadaId}
                     onSeleccionarLista={handleSeleccionarLista}
-                    onOpenAddMusicModal={openGestionListaModal}
+                    onAbrirGestionListas={handleAbrirGestionListas}
                 />
 
                 {/* renderiza contenido central */}
@@ -271,8 +271,8 @@ export default function Home({ usuario, onLogout }) {
                     <div className="grid h-full grid-cols-12 gap-3 md:gap-4">
                         <aside className="col-span-12 min-h-0 rounded-2xl border border-fuchsia-500/20 bg-[#0a0a0f] lg:col-span-4">
                             <PlaylistPanel
-                                onSeleccionarCancion={(song) =>
-                                    reproducirCancion(song, "PlaylistPanel", listaSeleccionada?.canciones || [])
+                                onSeleccionarCancion={(cancion) =>
+                                    reproducirCancion(cancion, "PlaylistPanel", listaSeleccionada?.canciones || [])
                                 }
                                 lista={listaSeleccionada}
                                 cancionActivaId={cancionActiva?.id}
@@ -297,8 +297,8 @@ export default function Home({ usuario, onLogout }) {
                                 loading={loadingExplorar}
                                 error={errorExplorar}
                                 generoSeleccionado={generoSeleccionado}
-                                onSeleccionarCancion={(song, colaExplore) =>
-                                    reproducirCancion(song, "ExplorePanel", colaExplore)
+                                onSeleccionarCancion={(cancion, colaExplore) =>
+                                    reproducirCancion(cancion, "ExplorePanel", colaExplore)
                                 }
                                 cancionActivaId={cancionActiva?.id}
                                 isPlaying={isPlaying}
@@ -313,14 +313,14 @@ export default function Home({ usuario, onLogout }) {
                     <PlayerBar
                         cancion={cancionActiva}
                         isPlaying={isPlaying}
-                        onTogglePlay={() => setIsPlaying((prev) => !prev)}
-                        onNext={handleSiguienteCancion}
-                        onPrev={handleAnteriorCancion}
+                        onAlternarReproduccion={() => setIsPlaying((prev) => !prev)}
+                        onSiguienteCancion={handleSiguienteCancion}
+                        onAnteriorCancion={handleAnteriorCancion}
                         shuffleActivo={shuffleActivo}
                         repeatActivo={repeatActivo}
-                        onToggleShuffle={handleToggleShuffle}
-                        onToggleRepeat={handleToggleRepeat}
-                        onSongEnded={() => {
+                        onAlternarShuffle={handleToggleShuffle}
+                        onAlternarRepeat={handleToggleRepeat}
+                        onFinalizarCancion={() => {
                             // renderiza repeticion o siguiente cancion al terminar
                             if (repeatActivo) {
                                 setIsPlaying(false);
@@ -333,8 +333,15 @@ export default function Home({ usuario, onLogout }) {
                 </footer>
             </div>
 
-            {/* renderiza modal de gestion y agregado */}
-            <AppModal type={modalType} selectedSong={selectedSong} onClose={closeModal} />
+            {/* renderiza modal de favoritos */}
+            <ModalFavoritos
+                isOpen={modalType === "gestionarListas" || modalType === "addMusicList"}
+                onClose={handleCerrarModal}
+                listas={listas}
+                listaSeleccionadaId={listaSeleccionadaId}
+                onSeleccionarLista={handleSeleccionarLista}
+                onAbrirAgregarCancion={handleAbrirAgregarCancion}
+            />
         </section>
     );
 }

@@ -23,14 +23,14 @@ import {
 export default function PlayerBar({
   cancion,
   isPlaying,
-  onTogglePlay,
-  onNext,
-  onPrev,
+  onAlternarReproduccion,
+  onSiguienteCancion,
+  onAnteriorCancion,
   shuffleActivo,
   repeatActivo,
-  onToggleShuffle,
-  onToggleRepeat,
-  onSongEnded,
+  onAlternarShuffle,
+  onAlternarRepeat,
+  onFinalizarCancion,
 }) {
 
 
@@ -108,7 +108,7 @@ export default function PlayerBar({
         ref={audioRef}
         src={cancion?.link_audio || ""}
         onTimeUpdate={handleTimeUpdate}
-        onEnded={onSongEnded}
+        onEnded={onFinalizarCancion}
       />
 
       <div className="flex h-full w-full max-w-[1400px] items-center justify-between gap-4 rounded-[1.8rem] border border-fuchsia-500/10 bg-[#050507] px-4 md:px-6">
@@ -136,7 +136,7 @@ export default function PlayerBar({
         <div className="flex max-w-[620px] flex-1 flex-col items-center justify-center gap-2">
           <div className="flex items-center gap-5 text-fuchsia-400">
             <button
-              onClick={onPrev}
+              onClick={onAnteriorCancion}
               disabled={!cancion}
               className="transition hover:scale-110 hover:text-fuchsia-300 disabled:opacity-30"
             >
@@ -145,7 +145,7 @@ export default function PlayerBar({
             <button
               onClick={() => {
                 if (hasSong) {
-                  onTogglePlay?.();
+                  onAlternarReproduccion?.();
                 }
               }}
               disabled={!hasSong}
@@ -163,7 +163,7 @@ export default function PlayerBar({
               )}
             </button>
             <button
-              onClick={onNext}
+              onClick={onSiguienteCancion}
               disabled={!cancion}
               className="transition hover:scale-110 hover:text-fuchsia-300 disabled:opacity-30"
             >
@@ -194,7 +194,7 @@ export default function PlayerBar({
         <div className="flex w-[28%] items-center justify-end gap-3">
           {/* botón aleatorio */}
           <button
-            onClick={onToggleShuffle}
+            onClick={onAlternarShuffle}
             className={`flex h-9 w-9 items-center justify-center rounded-lg transition
                 ${
                 shuffleActivo
@@ -206,7 +206,7 @@ export default function PlayerBar({
           </button>
           {/* botón repetir */}
           <button
-            onClick={onToggleRepeat}
+            onClick={onAlternarRepeat}
             className={`flex h-9 w-9 items-center justify-center rounded-lg transition
                 ${
                 repeatActivo

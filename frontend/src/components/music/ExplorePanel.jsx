@@ -115,8 +115,8 @@ export default function ExplorePanel({
     // HANDLER: REPRODUCIR CANCIÓN
     // ===============================
     // envía al home la canción y la cola visible actual
-    const handlePlay = (song) => {
-        onSeleccionarCancion?.(song, songsToShow);
+    const handleSeleccionarCancion = (cancion) => {
+        onSeleccionarCancion?.(cancion, songsToShow);
     };
 
     // ===============================
@@ -312,7 +312,7 @@ export default function ExplorePanel({
                                             ? selectedGroup.name
                                             : song.groupName
                                     }
-                                    onPlay={handlePlay}
+                                    onSeleccionarCancion={handleSeleccionarCancion}
                                     onToggleFavorite={handleToggleFavorite}
                                 />
                             ))}

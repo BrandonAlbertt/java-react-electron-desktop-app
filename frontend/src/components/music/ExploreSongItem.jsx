@@ -3,7 +3,7 @@ import MarqueeText from "./MarqueeText";
 /*
     Guia corta para entender este archivo (nivel principiante):
     - ExploreSongItem es un componente hijo: renderiza una sola fila de cancion.
-    - ExplorePanel es el componente padre: arma la lista y le pasa props como song, isActive, isPlaying, onPlay y onToggleFavorite.
+    - ExplorePanel es el componente padre: arma la lista y le pasa props como song, isActive, isPlaying, onSeleccionarCancion y onToggleFavorite.
     - MarqueeText es otro componente reutilizable: mueve el texto cuando no cabe en el ancho disponible.
     - Flujo de eventos: al hacer click en play o favorito, ExploreSongItem llama funciones del padre.
     - No controla estados globales: solo recibe datos y avisa eventos.
@@ -16,7 +16,7 @@ export default function ExploreSongItem({
     song,
     groupImage,
     groupName,
-    onPlay,
+    onSeleccionarCancion,
     onToggleFavorite,
     isActive = false,
     isPlaying = false,
@@ -62,7 +62,7 @@ export default function ExploreSongItem({
             {/* BOTÓN PLAY / PAUSE */}
             <button
                 type="button"
-                onClick={() => onPlay?.(song)}
+                onClick={() => onSeleccionarCancion?.(song)}
                 className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition hover:scale-110"
                 title={isPlaying ? "Pausar" : "Reproducir"}
             >
@@ -140,7 +140,7 @@ export default function ExploreSongItem({
         groupName={song.groupName}
         isActive={activeSongId === song.id}
         isPlaying={activeSongId === song.id && isPlaying}
-        onPlay={handlePlay}
+        onSeleccionarCancion={handleSeleccionarCancion}
         onToggleFavorite={handleToggleFavorite}
     />
 
@@ -148,5 +148,5 @@ export default function ExploreSongItem({
     - song debe incluir al menos: id, title o titulo
     - duration puede venir como segundos o texto
     - groupImage y groupName son opcionales, pero recomendados
-    - onPlay y onToggleFavorite deben ser funciones
+    - onSeleccionarCancion y onToggleFavorite deben ser funciones
 */

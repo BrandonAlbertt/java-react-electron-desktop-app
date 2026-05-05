@@ -3,10 +3,9 @@ import UserProfile from "./UserProfile";
 import FavoritesCarousel from "./FavoritesCarousel";
 import WindowControls from "./WindowControls";
 import UserMenu from "./UserMenu";
-import { listasFavoritas } from "../../data/favoriteLists";
 
 export default function TopHeader({
-    onOpenAddMusicModal,
+    onAbrirGestionListas,
     usuarioPerfil,
     onLogout,
     listas = [],
@@ -24,10 +23,9 @@ export default function TopHeader({
     // FUNCIONES Y EVENTOS AGRUPADOS
     // =============================
     // Selección de lista
-    const handleSelectLista = (lista) => {
-        console.log("TopHeader seleccionó:", lista.id);
-        // 🔥 ENVÍA EL ID AL HOME
-        onSeleccionarLista?.(lista.id);
+    const handleSeleccionarLista = (listaId) => {
+        console.log("TopHeader seleccionó:", listaId);
+        onSeleccionarLista?.(listaId);
     };
 
     // Ventana (controles)
@@ -49,8 +47,8 @@ export default function TopHeader({
             {/* IZQUIERDA */}
             <div className="no-drag absolute left-6 top-5 z-30">
                 <UserProfile
-                    userName={usuarioPerfil?.nombre_usuario || "Usuario"}
-                    userImage={usuarioPerfil?.avatar || "http://rasb-brandon.local:3000/media/musicbh/avatares/organicobohemio.png"}
+                    usuarioNombre={usuarioPerfil?.nombre_usuario || "Usuario"}
+                    usuarioAvatar={usuarioPerfil?.avatar || "http://rasb-brandon.local:3000/media/musicbh/avatares/organicobohemio.png"}
                     onToggleMenu={toggleMenu}
                 />
 
@@ -66,9 +64,9 @@ export default function TopHeader({
             <div className="no-drag absolute left-1/2 top-7 z-20 w-[820px] pr-6 -translate-x-1/2">
                 <FavoritesCarousel
                     listas={listas}
-                    activeListaId={listaSeleccionadaId}
-                    onSelectLista={handleSelectLista}
-                    onAddLista={onOpenAddMusicModal}
+                    listaSeleccionadaId={listaSeleccionadaId}
+                    onSeleccionarLista={handleSeleccionarLista}
+                    onAbrirGestionListas={onAbrirGestionListas}
                 />
             </div>
 
