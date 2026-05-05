@@ -1,74 +1,93 @@
+
+// ===============================
+// IMPORTACIONES
+// ===============================
 import { useEffect, useRef, useState } from "react";
 import SongItem from "./SongItem";
+import { normalizeSong } from "../../utils/normalizeSong";
 
+// ===============================
+// COMPONENTE PRINCIPAL
+// ===============================
 export default function PlaylistPanel({
   onOpenAddMusicModal,
   lista,
   onSeleccionarCancion,
   isPlaying,
-  cancionActivaId
-})
-{
-  
-  const [addedSongIds, setAddedSongIds] = useState([]);
+  cancionActivaId,
+  origenReproduccion
+}) {
 
+  // ===============================
+  // ESTADOS Y REFERENCIAS PRINCIPALES
+  // ===============================
+  // estados locales para canciones agregadas y flecha
+  const [addedSongIds, setAddedSongIds] = useState([]);
   const listRef = useRef(null);
   const [showBottomArrow, setShowBottomArrow] = useState(false);
 
+  // ===============================
+  // HANDLERS Y FUNCIONES DE EVENTOS
+  // ===============================
+  // reproducir canción seleccionada
   const handlePlay = (song) => {
     // ENVIAR AL HOME
     onSeleccionarCancion?.(song);
   };
 
+  // agregar o quitar canción de la lista local
   const handleToggleList = (song) => {
     setAddedSongIds((prev) => {
       const alreadyAdded = prev.includes(song.id);
-
       if (alreadyAdded) {
         return prev.filter((id) => id !== song.id);
       }
-
       return [...prev, song.id];
     });
   };
 
+  // eliminar canción (solo log)
   const handleRemove = (id) => {
     console.log("Eliminar canción:", id);
   };
 
+  // verifica si hay más contenido abajo para mostrar flecha
   const checkScrollState = () => {
     const el = listRef.current;
     if (!el) return;
-
     const hasMoreBelow = el.scrollTop + el.clientHeight < el.scrollHeight - 8;
     setShowBottomArrow(hasMoreBelow);
   };
 
+  // baja el contenido suavemente al hacer click en la flecha
   const handleScrollDown = () => {
     const el = listRef.current;
     if (!el) return;
-
     el.scrollBy({
       top: 220,
       behavior: "smooth",
     });
   };
 
+  // ===============================
+  // EFECTOS SECUNDARIOS (USEEFFECT)
+  // ===============================
+  // controla el scroll y la flecha al cambiar la lista
   useEffect(() => {
     checkScrollState();
-
     const el = listRef.current;
     if (!el) return;
-
     el.addEventListener("scroll", checkScrollState);
     window.addEventListener("resize", checkScrollState);
-
     return () => {
       el.removeEventListener("scroll", checkScrollState);
       window.removeEventListener("resize", checkScrollState);
     };
   }, [lista]);
 
+  // ===============================
+  // RENDERIZADO PRINCIPAL
+  // ===============================
   if (!lista) {
     return (
       <div className="flex h-full items-center justify-center rounded-[2rem] border border-fuchsia-500/20 bg-[#07070b] text-white/40">
@@ -110,19 +129,22 @@ export default function PlaylistPanel({
           className="no-scrollbar h-full overflow-y-auto px-4 pb-20 pt-5"
         >
           <div className="space-y-2">
-            {lista.canciones?.map((song) => (
-              <SongItem
-                key={song.id}
-                song={song}
-                isActive={song.id === cancionActivaId}
-                isPlaying={song.id === cancionActivaId && isPlaying}
-                isAdded={addedSongIds.includes(song.id)}
-                onPlay={handlePlay}
-                onRemove={handleRemove}
-                onToggleList={handleToggleList}
-                onAddToList={onOpenAddMusicModal}
-              />
-            ))}
+            {lista.canciones?.map((songRaw) => {
+              const song = normalizeSong(songRaw);
+              return (
+                <SongItem
+                  key={song.id}
+                  song={song}
+                  isActive={song.id === cancionActivaId && origenReproduccion === "PlaylistPanel"}
+                  isPlaying={song.id === cancionActivaId && origenReproduccion === "PlaylistPanel" && isPlaying}
+                  isAdded={addedSongIds.includes(song.id)}
+                  onPlay={handlePlay}
+                  onRemove={handleRemove}
+                  onToggleList={handleToggleList}
+                  onAddToList={onOpenAddMusicModal}
+                />
+              );
+            })}
           </div>
         </div>
 

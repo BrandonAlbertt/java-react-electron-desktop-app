@@ -1,7 +1,11 @@
+
+// ===============================
+// IMPORTACIONES
+// ===============================
 import { useEffect, useMemo, useRef, useState } from "react";
-import { musicGroups } from "../../data/musicData";
 import GroupCard from "./GroupCard";
 import ExploreSongItem from "./ExploreSongItem";
+import { normalizeSong } from "../../utils/normalizeSong";
 
 /*
     Guia corta para entender este archivo (nivel principiante):
@@ -12,122 +16,131 @@ import ExploreSongItem from "./ExploreSongItem";
     - Estilo especial no estandar: usa gradientes personalizados y clases arbitrarias para ocultar la barra de scroll.
 */
 
-export default function ExplorePanel() {
-    // Estado local de la vista
+
+// ===============================
+// COMPONENTE PRINCIPAL
+// ===============================
+export default function ExplorePanel({
+    grupos,
+    canciones,
+    loading,
+    error,
+    generoSeleccionado,
+    onSeleccionarCancion,
+    cancionActivaId,
+    isPlaying,
+    origenReproduccion
+}) {
+
+    // ===============================
+    // ESTADOS Y REFERENCIAS PRINCIPALES
+    // ===============================
+    // estados locales para la vista y reproducción
     const [activeTab, setActiveTab] = useState("groups");
     const [search, setSearch] = useState("");
     const [selectedGroup, setSelectedGroup] = useState(null);
-    const [groups, setGroups] = useState(musicGroups);
-    const [playingSongId, setPlayingSongId] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
 
-    // Referencias para scroll
+    // referencias para scroll de grupos y canciones
     const groupsScrollRef = useRef(null);
     const songsScrollRef = useRef(null);
 
-    // Estado para mostrar u ocultar la flecha inferior
+    // estado para mostrar/ocultar la flecha inferior
     const [showBottomArrow, setShowBottomArrow] = useState(false);
 
-    // Datos derivados para la pestaña de grupos
+    // ===============================
+    // DATOS DERIVADOS Y MEMOIZADOS
+    // ===============================
+    // transforma los datos de grupos recibidos
+    const groups = useMemo(() => {
+        return (grupos || []).map((grupo) => ({
+            id: grupo.id,
+            name: grupo.nombre,
+            image: grupo.imagen_url,
+        }));
+    }, [grupos]);
+
+    // ===============================
+    // DATOS DERIVADOS Y MEMOIZADOS
+    // ===============================
+    // transforma las canciones y agrega imagen del grupo
+    const songs = useMemo(() => {
+        return (canciones || []).map((cancion) => normalizeSong(cancion, grupos));
+    }, [canciones, grupos]);
+
+    // filtra grupos según búsqueda
     const filteredGroups = useMemo(() => {
         const term = search.trim().toLowerCase();
         if (!term) return groups;
-
         return groups.filter((group) =>
             group.name.toLowerCase().includes(term)
         );
     }, [search, groups]);
 
-    // Datos derivados para la pestaña de canciones
     const songsToShow = useMemo(() => {
         const term = search.trim().toLowerCase();
 
+        let result = songs;
+
         if (selectedGroup) {
-            return selectedGroup.songs.filter(
-                (song) =>
-                    song.title.toLowerCase().includes(term) ||
-                    selectedGroup.name.toLowerCase().includes(term)
+            result = result.filter(
+                (song) => song.grupo === selectedGroup.name
             );
         }
 
-        const allSongs = groups.flatMap((group) =>
-            group.songs.map((song) => ({
-                ...song,
-                groupId: group.id,
-                groupName: group.name,
-                groupImage: group.image,
-            }))
-        );
+        if (!term) return result;
 
-        if (!term) return allSongs;
-
-        return allSongs.filter(
+        return result.filter(
             (song) =>
-                song.title.toLowerCase().includes(term) ||
-                song.groupName.toLowerCase().includes(term)
+                song.titulo.toLowerCase().includes(term) ||
+                song.grupo.toLowerCase().includes(term)
         );
-    }, [search, selectedGroup, groups]);
+    }, [search, selectedGroup, songs]);
 
-    // Handlers de interacción
+    // ===============================
+    // HANDLERS Y EVENTOS DE USUARIO
+    // ===============================
+    // al hacer click en un grupo
     const handleGroupClick = (group) => {
         setSelectedGroup(group);
         setActiveTab("songs");
         setSearch("");
     };
 
+    // al marcar/desmarcar favorito
     const handleToggleFavorite = (songId) => {
-        const updatedGroups = groups.map((group) => ({
-            ...group,
-            songs: group.songs.map((song) =>
-                song.id === songId
-                    ? { ...song, isFavorite: !song.isFavorite }
-                    : song
-            ),
-        }));
-
-        setGroups(updatedGroups);
-
-        if (selectedGroup) {
-            const updatedSelected = updatedGroups.find(
-                (g) => g.id === selectedGroup.id
-            );
-            setSelectedGroup(updatedSelected);
-        }
+        console.log("Agregar/quitar favorito:", songId);
     };
 
+    // ===============================
+    // HANDLER: REPRODUCIR CANCIÓN
+    // ===============================
+    // envía al home la canción y la cola visible actual
     const handlePlay = (song) => {
-        if (playingSongId === song.id) {
-            setIsPlaying((prev) => !prev);
-        } else {
-            setPlayingSongId(song.id);
-            setIsPlaying(true);
-        }
-
-        console.log("Reproducir canción:", song);
+        onSeleccionarCancion?.(song, songsToShow);
     };
 
-    // Devuelve la referencia activa según la pestaña actual
+    // ===============================
+    // FUNCIONES AUXILIARES DE SCROLL
+    // ===============================
+    // obtiene la referencia activa según la pestaña
     const getCurrentScrollRef = () => {
         return activeTab === "groups"
             ? groupsScrollRef.current
             : songsScrollRef.current;
     };
 
-    // Verifica si aún hay contenido abajo
+    // verifica si hay contenido abajo para mostrar flecha
     const checkScrollState = () => {
         const el = getCurrentScrollRef();
         if (!el) return;
-
         const hasMoreBelow =
             el.scrollTop + el.clientHeight < el.scrollHeight - 8;
-
         setShowBottomArrow(hasMoreBelow);
     };
 
-    // Baja el contenido suavemente
+    // baja el contenido suavemente al hacer click en la flecha
     const handleScrollDown = () => {
         const currentRef = getCurrentScrollRef();
-
         if (currentRef) {
             currentRef.scrollBy({
                 top: 250,
@@ -136,63 +149,92 @@ export default function ExplorePanel() {
         }
     };
 
+    // ===============================
+    // EFECTOS SECUNDARIOS (USEEFFECT)
+    // ===============================
+    // controla el scroll y la flecha al cambiar pestaña, grupo o búsqueda
     useEffect(() => {
         const el = getCurrentScrollRef();
         if (!el) return;
-
         checkScrollState();
-
         el.addEventListener("scroll", checkScrollState);
         window.addEventListener("resize", checkScrollState);
-
         return () => {
             el.removeEventListener("scroll", checkScrollState);
             window.removeEventListener("resize", checkScrollState);
         };
-    }, [activeTab, selectedGroup, search, groups]);
+    }, [activeTab, selectedGroup, search, groups, songsToShow]);
 
-    // Estado visual auxiliar
+    // ===============================
+    // ESTADO VISUAL AUXILIAR
+    // ===============================
+    // muestra el texto de grupo seleccionado
     const showBackToGroups = activeTab === "songs" && selectedGroup;
 
+
+    // ===============================
+    // RENDERIZADO PRINCIPAL
+    // ===============================
+    // muestra loading o error si corresponde
+    if (loading) {
+        return (
+            <section className="flex h-full min-h-0 w-full items-center justify-center rounded-[1.7rem] border border-white/10 bg-[#07070b] p-3 text-sm text-white/50">
+                Cargando exploración...
+            </section>
+        );
+    }
+
+    if (error) {
+        return (
+            <section className="flex h-full min-h-0 w-full items-center justify-center rounded-[1.7rem] border border-red-500/20 bg-[#07070b] p-3 text-sm text-red-300">
+                {error}
+            </section>
+        );
+    }
+
+
     return (
-        <section className="flex h-full min-h-0 w-full flex-col rounded-[2rem] border border-white/10 bg-[#07070b] p-4 text-white">
-            {/* Buscador */}
-            <div className="mb-4 shrink-0">
-                <div className="flex h-14 items-center rounded-full border border-white/10 bg-white/5 px-5">
-                    <span className="mr-3 text-2xl text-white/55">⌕</span>
+        <section className="flex h-full min-h-0 w-full flex-col rounded-[1.7rem] border border-white/10 bg-[#07070b] p-3 text-white">
+            {/* =============================== */}
+            {/* BUSCADOR */}
+            {/* =============================== */}
+            <div className="mb-2 shrink-0">
+                <div className="flex h-10 items-center rounded-full border border-white/10 bg-white/[0.04] px-4">
+                    <span className="mr-2 text-base text-white/45">⌕</span>
                     <input
                         type="text"
                         placeholder="Buscar canción o grupo"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="h-full w-full bg-transparent text-lg text-white outline-none placeholder:text-white/40"
+                        className="h-full w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35"
                     />
                 </div>
             </div>
 
-            {/* Pestañas para cambiar entre vista de grupos y vista de canciones */}
-            <div className="mb-4 shrink-0">
-                <div className="flex rounded-2xl bg-[#121217] p-1">
+            {/* =============================== */}
+            {/* PESTAÑAS DE VISTA (GRUPOS / CANCIONES) */}
+            {/* =============================== */}
+            <div className="mb-2 shrink-0">
+                <div className="flex rounded-full border border-white/5 bg-white/[0.035] p-1">
                     <button
                         onClick={() => {
                             setActiveTab("groups");
                             setSelectedGroup(null);
                         }}
-                        className={`flex-1 rounded-xl px-4 py-3 text-lg transition ${
+                        className={`flex-1 rounded-full px-3 py-1.5 text-sm transition-all duration-300 ${
                             activeTab === "groups"
-                                ? "bg-black text-white shadow-[inset_0_-2px_0_rgba(168,85,247,1)]"
-                                : "text-white/55 hover:text-white"
+                                ? "bg-black/80 text-white shadow-[0_0_12px_rgba(168,85,247,0.25),inset_0_-1px_0_rgba(217,70,239,0.8)]"
+                                : "text-white/45 hover:text-white/80"
                         }`}
                     >
                         Grupos
                     </button>
-
                     <button
                         onClick={() => setActiveTab("songs")}
-                        className={`flex-1 rounded-xl px-4 py-3 text-lg transition ${
+                        className={`flex-1 rounded-full px-3 py-1.5 text-sm transition-all duration-300 ${
                             activeTab === "songs"
-                                ? "bg-black text-white shadow-[inset_0_-2px_0_rgba(168,85,247,1)]"
-                                : "text-white/55 hover:text-white"
+                                ? "bg-black/80 text-white shadow-[0_0_12px_rgba(168,85,247,0.25),inset_0_-1px_0_rgba(217,70,239,0.8)]"
+                                : "text-white/45 hover:text-white/80"
                         }`}
                     >
                         Canciones
@@ -200,16 +242,17 @@ export default function ExplorePanel() {
                 </div>
             </div>
 
-            {/* Texto de contexto cuando hay un grupo filtrado */}
+            {/* =============================== */}
+            {/* TEXTO DE GRUPO SELECCIONADO */}
+            {/* =============================== */}
             {showBackToGroups && (
                 <div className="mb-3 flex items-center justify-between px-1">
                     <p className="text-sm text-fuchsia-400">
-                        Grupo seleccionado:{" "}
+                        Grupo seleccionado: {" "}
                         <span className="font-semibold">
                             {selectedGroup.name}
                         </span>
                     </p>
-
                     <button
                         onClick={() => {
                             setSelectedGroup(null);
@@ -222,14 +265,16 @@ export default function ExplorePanel() {
                 </div>
             )}
 
-            {/* Contenido principal: este panel cambia entre grupos y canciones */}
-            <div className="relative min-h-0 flex-1 overflow-hidden rounded-[1.6rem] bg-black p-5">
+            {/* =============================== */}
+            {/* PANEL PRINCIPAL: GRUPOS O CANCIONES */}
+            {/* =============================== */}
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-[1.6rem] bg-black p-4">
                 {activeTab === "groups" ? (
                     <>
-                        {/* Grid de grupos: cambia md:grid-cols-3 por md:grid-cols-4 o md:grid-cols-5 para agregar columnas */}
+                        {/* grid de grupos */}
                         <div
                             ref={groupsScrollRef}
-                            className="grid h-full grid-cols-2 gap-x-6 gap-y-8 overflow-y-auto pr-0 md:grid-cols-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                            className="grid h-full auto-rows-[9rem] grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                         >
                             {filteredGroups.map((group) => (
                                 <GroupCard
@@ -245,15 +290,18 @@ export default function ExplorePanel() {
                         ref={songsScrollRef}
                         className="h-full overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                     >
-                        {/* Contenedor de canciones: fondo heredado bg-black del padre */}
-                        {/* Lista vertical de canciones filtradas */}
+                        {/* lista vertical de canciones filtradas */}
                         <div className="space-y-2">
                             {songsToShow.map((song) => (
                                 <ExploreSongItem
                                     key={song.id}
                                     song={song}
-                                    isActive={playingSongId === song.id}
-                                    isPlaying={playingSongId === song.id && isPlaying}
+                                    isActive={song.id === cancionActivaId && origenReproduccion === "ExplorePanel"}
+                                    isPlaying={
+                                        song.id === cancionActivaId &&
+                                        origenReproduccion === "ExplorePanel" &&
+                                        isPlaying
+                                    }
                                     groupImage={
                                         selectedGroup
                                             ? selectedGroup.image
@@ -268,7 +316,6 @@ export default function ExplorePanel() {
                                     onToggleFavorite={handleToggleFavorite}
                                 />
                             ))}
-
                             {songsToShow.length === 0 && (
                                 <div className="flex h-full items-center justify-center py-10 text-white/45">
                                     No se encontraron resultados.
@@ -278,10 +325,10 @@ export default function ExplorePanel() {
                     </div>
                 )}
 
-                {/* Difuminado inferior para suavizar el corte del scroll */}
+                {/* =============================== */}
+                {/* DIFUMINADO Y FLECHA INFERIOR */}
+                {/* =============================== */}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black via-black/80 to-transparent" />
-
-                {/* Flecha flotante: aparece cuando hay mas contenido hacia abajo */}
                 {showBottomArrow && (
                     <div className="absolute inset-x-0 bottom-3 z-20 flex justify-center">
                         <button

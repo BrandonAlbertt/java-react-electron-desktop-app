@@ -1,149 +1,240 @@
+
+
+// ===============================
+// IMPORTS: librerías y componentes
+// ===============================
+import { useEffect, useRef, useState } from "react";
 import {
-    SkipBack,
-    SkipForward,
-    Play,
-    Shuffle,
-    Repeat,
-    Plus,
-    Volume2,
+  SkipBack,
+  SkipForward,
+  Play,
+  Pause,
+  Shuffle,
+  Repeat,
+  Plus,
+  Volume2,
 } from "lucide-react";
 
-/*
-  PlayerBar.jsx
 
-  Este componente representa la barra inferior del reproductor.
+// ===============================
+// COMPONENTE PRINCIPAL
+// ===============================
+// recibe props para controlar la barra de reproducción
+export default function PlayerBar({
+  cancion,
+  isPlaying,
+  onTogglePlay,
+  onNext,
+  onPrev,
+  shuffleActivo,
+  repeatActivo,
+  onToggleShuffle,
+  onToggleRepeat,
+  onSongEnded,
+}) {
 
-  Funcionalidades principales:
-  - Mostrar información de la canción actual
-  - Controles de reproducción
-  - Barra de progreso
-  - Acciones rápidas como mezclar, repetir y agregar
-  - Barra de volumen con icono de parlante
 
-  Nota:
-  - Se usan iconos de lucide-react para mantener un estilo más limpio
-    y acorde al diseño general de la aplicación.
+  // =====================================
+  // REFERENCIAS Y ESTADOS: hooks locales
+  // =====================================
+  const audioRef = useRef(null); // referencia al elemento de audio
+  const [currentTime, setCurrentTime] = useState(0); // tiempo actual de la canción
+  const [volume, setVolume] = useState(0.65); // volumen del reproductor
+  const hasSong = !!cancion; // indica si hay canción cargada
 
-  Verificación e instalación de iconos:
-  - Para verificar si está instalado:
-    ejecutar en consola → npm list lucide-react
-  - Para instalar:
-    ejecutar → npm install lucide-react
-  -Lo puedes encontrar en -> https://lucide.dev/ y en package.json
-*/
+  // =====================================
+  // FUNCIONES UTILITARIAS: helpers locales
+  // =====================================
+  // formatea los segundos a mm:ss
+  const formatTime = (seconds) => {
+    if (!seconds) return "0:00";
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec.toString().padStart(2, "0")}`;
+  };
 
-export default function PlayerBar() {
-    return (
-        <div className="flex h-full w-full items-center justify-center">
-            {/* CONTENEDOR PRINCIPAL */}
-            <div
-                className="
-                flex h-full w-full max-w-[1400px] items-center justify-between gap-4
-                rounded-[1.8rem] border border-fuchsia-500/10 bg-[#050507]
-                px-4 md:px-6
-                "
-            >
-                {/* IZQUIERDA - INFO DE LA CANCIÓN */}
-                <div className="flex min-w-0 w-[28%] items-center gap-3">
-                    <div className="relative">
-                        <div className="absolute inset-0 rounded-full bg-fuchsia-500/10 blur-md" />
-                        <img
-                            src="https://via.placeholder.com/60"
-                            alt="Portada de canción"
-                            className="relative h-12 w-12 rounded-full object-cover ring-1 ring-fuchsia-500/20"
-                        />
-                    </div>
+  // =====================================
+  // EFECTOS: sincronización de estado
+  // =====================================
+  // controla la reproducción y el volumen
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !hasSong) return;
+    audio.volume = volume;
+    if (isPlaying) {
+      audio.play().catch((error) => {
+        console.log("No se pudo reproducir:", error);
+      });
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying, cancion, hasSong, volume]);
 
-                    <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-white">
-                            Nombre de canción
-                        </p>
-                        <p className="truncate text-xs text-white/60">
-                            Grupo o artista de canción
-                        </p>
-                    </div>
-                </div>
+  // =====================================
+  // HANDLERS DE EVENTOS: interacción UI
+  // =====================================
+  // actualiza el tiempo actual cuando avanza la canción
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setCurrentTime(audio.currentTime);
+  };
 
-                {/* CENTRO - CONTROLES Y PROGRESO */}
-                <div className="flex max-w-[620px] flex-1 flex-col items-center justify-center gap-2">
-                    {/* BOTONES */}
-                    <div className="flex items-center gap-5 text-fuchsia-400">
-                        <button className="transition hover:scale-110 hover:text-fuchsia-300">
-                            <SkipBack size={18} />
-                        </button>
+  // permite cambiar el progreso de la canción
+  const handleProgressChange = (e) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const newTime = Number(e.target.value);
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
 
-                        <button
-                            className="
-                            flex h-12 w-12 items-center justify-center rounded-full
-                            bg-fuchsia-600 text-white shadow-[0_0_18px_rgba(217,70,239,0.35)]
-                            transition hover:scale-105 hover:bg-fuchsia-500
-                            "
-                        >
-                            <Play size={18} fill="currentColor" />
-                        </button>
+  // permite cambiar el volumen
+  const handleVolumeChange = (e) => {
+    const newVolume = Number(e.target.value);
+    setVolume(newVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
+  };
 
-                        <button className="transition hover:scale-110 hover:text-fuchsia-300">
-                            <SkipForward size={18} />
-                        </button>
-                    </div>
 
-                    {/* BARRA DE PROGRESO */}
-                    <div className="flex w-full items-center gap-2">
-                        <span className="text-xs text-white/60">0:00</span>
+  // ===============================
+  // RENDER: estructura visual del player
+  // ===============================
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <audio
+        ref={audioRef}
+        src={cancion?.link_audio || ""}
+        onTimeUpdate={handleTimeUpdate}
+        onEnded={onSongEnded}
+      />
 
-                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
-                            <div className="h-full w-[40%] rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-500" />
-                        </div>
-
-                        <span className="text-xs text-white/60">3:20</span>
-                    </div>
-                </div>
-
-                {/* DERECHA - ACCIONES Y VOLUMEN */}
-                <div className="flex w-[28%] items-center justify-end gap-3">
-                    <button
-                        className="
-                        flex h-9 w-9 items-center justify-center rounded-lg
-                        bg-white/5 text-white/65 transition
-                        hover:bg-white/10 hover:text-fuchsia-300
-                        "
-                        title="Mezclar"
-                    >
-                        <Shuffle size={16} />
-                    </button>
-
-                    <button
-                        className="
-                        flex h-9 w-9 items-center justify-center rounded-lg
-                        bg-white/5 text-white/65 transition
-                        hover:bg-white/10 hover:text-fuchsia-300
-                        "
-                        title="Repetir"
-                    >
-                        <Repeat size={16} />
-                    </button>
-
-                    <button
-                        className="
-                        flex h-9 w-9 items-center justify-center rounded-lg
-                        bg-white/5 text-fuchsia-400 transition
-                        hover:bg-white/10 hover:text-fuchsia-300
-                        "
-                        title="Agregar a favoritos"
-                    >
-                        <Plus size={18} />
-                    </button>
-
-                    {/* VOLUMEN */}
-                    <div className="ml-2 flex items-center gap-2">
-                        <Volume2 size={17} className="text-white/65" />
-
-                        <div className="h-1 w-24 overflow-hidden rounded-full bg-white/10">
-                            <div className="h-full w-[65%] rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-500" />
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div className="flex h-full w-full max-w-[1400px] items-center justify-between gap-4 rounded-[1.8rem] border border-fuchsia-500/10 bg-[#050507] px-4 md:px-6">
+        {/* izquierda: info de la canción */}
+        <div className="flex min-w-0 w-[28%] items-center gap-3">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-fuchsia-500/10 blur-md" />
+            <img
+              src={cancion?.imagen_grupo || "https://via.placeholder.com/60"}
+              alt={cancion?.titulo || "Portada de canción"}
+              className="relative h-12 w-12 rounded-full object-cover ring-1 ring-fuchsia-500/20"
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">
+              {cancion?.titulo || "Sin canción"}
+            </p>
+            <p className="truncate text-xs text-white/60">
+              {cancion?.grupo || "Selecciona una canción"}
+            </p>
+          </div>
         </div>
-    );
+
+        {/* centro: controles y progreso */}
+        <div className="flex max-w-[620px] flex-1 flex-col items-center justify-center gap-2">
+          <div className="flex items-center gap-5 text-fuchsia-400">
+            <button
+              onClick={onPrev}
+              disabled={!cancion}
+              className="transition hover:scale-110 hover:text-fuchsia-300 disabled:opacity-30"
+            >
+              <SkipBack size={18} />
+            </button>
+            <button
+              onClick={() => {
+                if (hasSong) {
+                  onTogglePlay?.();
+                }
+              }}
+              disabled={!hasSong}
+              className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition
+                ${
+                  hasSong
+                    ? "bg-fuchsia-600 shadow-[0_0_18px_rgba(217,70,239,0.35)] hover:scale-105 hover:bg-fuchsia-500"
+                    : "cursor-not-allowed bg-white/10 text-white/30"
+                }`}
+            >
+              {isPlaying ? (
+                <Pause size={18} fill="currentColor" />
+              ) : (
+                <Play size={18} fill="currentColor" />
+              )}
+            </button>
+            <button
+              onClick={onNext}
+              disabled={!cancion}
+              className="transition hover:scale-110 hover:text-fuchsia-300 disabled:opacity-30"
+            >
+              <SkipForward size={18} />
+            </button>
+          </div>
+          {/* barra de progreso */}
+          <div className="flex w-full items-center gap-2">
+            <span className="text-xs text-white/60">
+              {formatTime(currentTime)}
+            </span>
+            <input
+              type="range"
+              min="0"
+              max={cancion?.duracion_segundos || 0}
+              value={currentTime}
+              onChange={handleProgressChange}
+              disabled={!hasSong}
+              className="h-1 flex-1 cursor-pointer accent-fuchsia-500"
+            />
+            <span className="text-xs text-white/60">
+              {formatTime(cancion?.duracion_segundos)}
+            </span>
+          </div>
+        </div>
+
+        {/* derecha: shuffle, repeat, volumen, etc */}
+        <div className="flex w-[28%] items-center justify-end gap-3">
+          {/* botón aleatorio */}
+          <button
+            onClick={onToggleShuffle}
+            className={`flex h-9 w-9 items-center justify-center rounded-lg transition
+                ${
+                shuffleActivo
+                    ? "bg-fuchsia-500/15 text-fuchsia-300"
+                    : "bg-white/5 text-white/65 hover:bg-white/10 hover:text-fuchsia-300"
+                }`}
+          >
+            <Shuffle size={16} />
+          </button>
+          {/* botón repetir */}
+          <button
+            onClick={onToggleRepeat}
+            className={`flex h-9 w-9 items-center justify-center rounded-lg transition
+                ${
+                repeatActivo
+                    ? "bg-green-500/15 text-green-300"
+                    : "bg-white/5 text-white/65 hover:bg-white/10 hover:text-fuchsia-300"
+                }`}
+          >
+            <Repeat size={16} />
+          </button>
+          {/* botón agregar */}
+          <button className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-fuchsia-400 transition hover:bg-white/10 hover:text-fuchsia-300">
+            <Plus size={18} />
+          </button>
+          {/* control de volumen */}
+          <div className="ml-2 flex items-center gap-2">
+            <Volume2 size={17} className="text-white/65" />
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={handleVolumeChange}
+              className="h-1 w-24 cursor-pointer accent-fuchsia-500"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

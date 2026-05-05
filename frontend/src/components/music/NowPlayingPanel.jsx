@@ -1,58 +1,88 @@
+
+// ===============================
+// IMPORTACIONES
+// ===============================
 import { useEffect, useRef, useState } from "react";
+import LyricsText from "./LyricsText";
 
 /*
   NowPlayingPanel.jsx
 */
 
+// ===============================
+// COMPONENTE PRINCIPAL
+// ===============================
 export default function NowPlayingPanel({ cancion, isPlaying }) {
+
+  // ===============================
+  // ESTADOS Y REFERENCIAS PRINCIPALES
+  // ===============================
+  // estados locales para letra, scroll y flecha
   const [showLyrics, setShowLyrics] = useState(false);
   const contentRef = useRef(null);
   const [showBottomArrow, setShowBottomArrow] = useState(false);
 
+  // ===============================
+  // DATOS DERIVADOS Y MEMOIZADOS
+  // ===============================
+  // verifica si hay canción activa
   const hasSong = !!cancion;
-
+  // texto de estado de reproducción
   const estadoTexto = isPlaying ? "En reproducción" : "No reproducción";
-
+  // texto de géneros
   const generosTexto = cancion?.generos?.length
     ? cancion.generos.join(" - ")
     : "Sin géneros";
 
+  // selección robusta de la imagen de la canción (varios formatos posibles)
+  const imagenCancion =
+    cancion?.imagen_grupo || cancion?.imagen || cancion?.imagen_url || cancion?.groupImage || "";
+
+  // ===============================
+  // HANDLERS Y FUNCIONES DE EVENTOS
+  // ===============================
+  // verifica si hay más contenido abajo para mostrar flecha
   const checkScrollState = () => {
     const el = contentRef.current;
     if (!el) return;
-
     const hasMoreBelow = el.scrollTop + el.clientHeight < el.scrollHeight - 8;
     setShowBottomArrow(hasMoreBelow);
   };
 
+  // baja el contenido suavemente al hacer click en la flecha
   const handleScrollDown = () => {
     const el = contentRef.current;
     if (!el) return;
-
     el.scrollBy({
       top: 180,
       behavior: "smooth",
     });
   };
 
+  // ===============================
+  // EFECTOS SECUNDARIOS (USEEFFECT)
+  // ===============================
+  // controla el scroll y la flecha al cambiar letra, canción o estado
   useEffect(() => {
     checkScrollState();
-
     const el = contentRef.current;
     if (!el) return;
-
     el.addEventListener("scroll", checkScrollState);
     window.addEventListener("resize", checkScrollState);
-
     return () => {
       el.removeEventListener("scroll", checkScrollState);
       window.removeEventListener("resize", checkScrollState);
     };
   }, [showLyrics, hasSong, cancion]);
 
+  // ===============================
+  // RENDERIZADO PRINCIPAL
+  // ===============================
   return (
     <section className="flex h-full min-h-0 w-full flex-col rounded-[2rem] border border-fuchsia-500/20 bg-[#07070b] p-3 text-white sm:p-4">
-      {/* HEADER */}
+      {/* =============================== */}
+      {/* HEADER: ESTADO Y BOTÓN LETRA */}
+      {/* =============================== */}
       <div className="mb-2 flex shrink-0 items-center justify-between sm:mb-3">
         <div className="flex items-center gap-2">
           <span
@@ -61,12 +91,10 @@ export default function NowPlayingPanel({ cancion, isPlaying }) {
                 : "bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.9)]"
               }`}
           />
-
           <p className="text-[clamp(0.68rem,0.9vw,0.9rem)] font-medium uppercase tracking-[0.12em] text-white/72">
             {hasSong ? estadoTexto : "No reproducción"}
           </p>
         </div>
-
         <button
           onClick={() => {
             if (hasSong) {
@@ -95,7 +123,9 @@ export default function NowPlayingPanel({ cancion, isPlaying }) {
         </button>
       </div>
 
-      {/* CONTENIDO */}
+      {/* =============================== */}
+      {/* CONTENIDO PRINCIPAL: INFO O LETRA */}
+      {/* =============================== */}
       <div className="relative min-h-0 flex-1">
         <div
           ref={contentRef}
@@ -107,31 +137,27 @@ export default function NowPlayingPanel({ cancion, isPlaying }) {
                 <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-orange-900/40 bg-orange-950/20 text-3xl text-orange-800">
                   ♪
                 </div>
-
                 <p className="text-[clamp(0.95rem,1.2vw,1.2rem)] font-semibold text-white/88">
                   Reproduzca una canción
                 </p>
-
                 <p className="mt-2 text-[0.82rem] text-white/45">
                   Aquí se mostrará la información cuando haya música activa.
                 </p>
               </div>
             </div>
           )}
-
           {hasSong && !showLyrics && (
             <div className="flex min-h-full flex-col">
               <div className="mb-3 flex shrink-0 justify-center sm:mb-4">
                 <div className="relative">
                   <div className="absolute inset-0 rounded-full bg-fuchsia-500/12 blur-2xl" />
                   <img
-                    src={cancion.imagen_grupo}
-                    alt={cancion.titulo}
+                    src={imagenCancion}
+                    alt={cancion.titulo || cancion.title || "Cover"}
                     className="relative h-24 w-24 rounded-full object-cover ring-1 ring-fuchsia-500/20 shadow-[0_0_24px_rgba(168,85,247,0.14)] sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-44 lg:w-44"
                   />
                 </div>
               </div>
-
               <div className="rounded-[1.8rem] border border-fuchsia-500/10 bg-gradient-to-b from-[#0b0b10]/80 to-[#07070b]/60 px-4 py-4 backdrop-blur-md">
                 <div className="flex flex-col gap-1.5 sm:gap-2">
                   <CompactInfoBlock
@@ -139,12 +165,10 @@ export default function NowPlayingPanel({ cancion, isPlaying }) {
                     value={cancion.titulo}
                     strong
                   />
-
                   <CompactInfoBlock
                     label="Grupo"
                     value={cancion.grupo}
                   />
-
                   <CompactInfoBlock
                     label="Géneros"
                     value={generosTexto}
@@ -153,7 +177,6 @@ export default function NowPlayingPanel({ cancion, isPlaying }) {
               </div>
             </div>
           )}
-
           {hasSong && showLyrics && (
             <div className="flex min-h-full flex-col">
               <div className="mb-2 shrink-0 sm:mb-3">
@@ -161,20 +184,20 @@ export default function NowPlayingPanel({ cancion, isPlaying }) {
                   Letra
                 </p>
               </div>
-
               <div className="flex min-h-0 flex-1 flex-col rounded-[1.5rem] border border-fuchsia-500/10 bg-gradient-to-b from-[#0b0b10]/80 to-[#07070b]/60 px-3 py-3 shadow-inner backdrop-blur-md sm:rounded-[1.8rem] sm:px-4 sm:py-4">
                 <div className="rounded-[1.2rem] bg-[#0b0b10] px-3 py-3 sm:rounded-[1.3rem] sm:px-4 sm:py-4">
-                  <p className="whitespace-pre-line text-center text-[clamp(0.76rem,1vw,1rem)] leading-6 text-white/85 sm:leading-7">
-                    Letra no disponible
-                  </p>
+                  <LyricsText 
+                    letra={cancion.letra}
+                  />
                 </div>
               </div>
             </div>
           )}
         </div>
-
+        {/* =============================== */}
+        {/* DIFUMINADO Y FLECHA INFERIOR */}
+        {/* =============================== */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 rounded-b-[2rem] bg-gradient-to-t from-[#07070b] via-[#07070b]/88 to-transparent" />
-
         {hasSong && showBottomArrow && (
           <div className="absolute inset-x-0 bottom-3 z-20 flex justify-center">
             <button

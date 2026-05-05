@@ -1,26 +1,60 @@
-// components/music/CarouselGenres.jsx
+// components/music/CarouselGeneres.jsx
 
-const genres = ["Anime", "JPop", "Rock", "Bals", "Pop"];
+import { useRef } from "react";
 
-export default function CarouselGenres() {
+export default function CarouselGeneres({
+    generos = [],
+    generoSeleccionadoId,
+    onSeleccionarGenero,
+}) {
+    const carouselRef = useRef(null);
+
+    const scrollLeft = () => {
+        carouselRef.current?.scrollBy({
+            left: -180,
+            behavior: "smooth",
+        });
+    };
+
+    const scrollRight = () => {
+        carouselRef.current?.scrollBy({
+            left: 180,
+            behavior: "smooth",
+        });
+    };
+
     return (
         <div className="flex h-7 w-full items-center gap-2 rounded-full bg-[#151515] px-2 text-xs text-white/45">
-            <button className="shrink-0 text-white/60 hover:text-white">
+            <button
+                onClick={scrollLeft}
+                className="shrink-0 text-white/60 transition hover:text-white"
+            >
                 ◀
             </button>
 
-            <div className="flex min-w-0 flex-1 items-center justify-around gap-4 overflow-hidden">
-                {genres.map((genre) => (
+            <div
+                ref={carouselRef}
+                className="flex min-w-0 flex-1 items-center gap-5 overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
+                {generos.map((genero) => (
                     <button
-                        key={genre}
-                        className="shrink-0 transition hover:text-fuchsia-300"
+                        key={genero.id}
+                        onClick={() => onSeleccionarGenero(genero)}
+                        className={`shrink-0 whitespace-nowrap transition hover:text-fuchsia-300 ${
+                            generoSeleccionadoId === genero.id
+                                ? "text-fuchsia-300"
+                                : "text-white/45"
+                        }`}
                     >
-                        {genre}
+                        {genero.nombre}
                     </button>
                 ))}
             </div>
 
-            <button className="shrink-0 text-white/60 hover:text-white">
+            <button
+                onClick={scrollRight}
+                className="shrink-0 text-white/60 transition hover:text-white"
+            >
                 ▶
             </button>
         </div>

@@ -26,31 +26,37 @@
   - Mantiene proporciones fijas para evitar deformaciones
 */
 
-
-
 export default function GroupCard({ group, onClick }) {
   return (
     <button
       onClick={() => onClick?.(group)}
-      className="group flex w-full flex-col items-center text-center"
+      className="group relative h-36 w-full overflow-hidden rounded-3xl border border-white/10 bg-[#111118] text-left transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-500/40 hover:shadow-[0_0_25px_rgba(217,70,239,0.25)]"
     >
-      {/* Contenedor visual que aplica el zoom al pasar el cursor */}
-      <div className="w-full max-w-28 overflow-hidden rounded-full transition duration-300 group-hover:scale-110">
-        {/* La imagen usa ancho fluido para adaptarse si aumentas columnas */}
-        <img
-          src={group.image}
-          alt={group.name}
-          className="aspect-square w-full rounded-full object-cover"
-        />
-      </div>
+      {/* Imagen del grupo */}
+      <img
+        src={group.image}
+        alt={group.name}
+        className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-110"
+      />
 
-      {/* Nombre del grupo debajo de la portada */}
-      <p className="mt-3 text-lg text-white transition group-hover:text-fuchsia-400">
-        {group.name}
-      </p>
+      {/* Oscurecido elegante */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent" />
+
+      {/* Brillo suave */}
+      <div className="absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-violet-500/10" />
+
+      {/* Nombre */}
+      <div className="absolute bottom-0 left-0 right-0 p-4">
+        <p className="line-clamp-2 text-base font-semibold leading-tight text-white drop-shadow">
+          {group.name}
+        </p>
+      </div>
     </button>
   );
 }
+
+
+
 
 /*
   Uso rapido en un componente padre:

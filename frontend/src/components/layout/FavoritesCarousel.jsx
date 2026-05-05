@@ -8,31 +8,35 @@ export default function FavoritesCarousel({
     onSelectLista,
     onAddLista,
 }) {
-
-    // =============================
-    // REFERENCIAS Y ESTADO LOCAL
-    // =============================
+    // =========================================================
+    // ===== REFERENCIAS DEL CARRUSEL ==========================
+    // =========================================================
+    // guardan el contenedor, objetivo del scroll y animación activa
     const scrollRef = useRef(null);
     const targetScrollRef = useRef(0);
     const animationFrameRef = useRef(null);
+
+    // guardan dirección y velocidad cuando el mouse está cerca del borde
     const hoverDirectionRef = useRef(0);
     const hoverSpeedRef = useRef(0);
 
-    // =============================
-    // MEMOS DERIVADOS
-    // =============================
+    // =========================================================
+    // ===== DATOS DERIVADOS DE LAS LISTAS =====================
+    // =========================================================
+    // obtiene la lista activa que se mostrará al centro
     const listaActiva = useMemo(() => {
         return listas.find((lista) => lista.id === activeListaId);
     }, [listas, activeListaId]);
 
+    // obtiene las listas que se mostrarán en el carrusel lateral
     const listasDelCarousel = useMemo(() => {
         return listas.filter((lista) => lista.id !== activeListaId);
     }, [listas, activeListaId]);
 
-    // =============================
-    // FUNCIONES Y EVENTOS AGRUPADOS
-    // =============================
-    // Animación de scroll
+    // =========================================================
+    // ===== FUNCIONES DE ANIMACIÓN DEL SCROLL =================
+    // =========================================================
+    // anima el movimiento del carrusel poco a poco
     const animateScroll = () => {
         const container = scrollRef.current;
         if (!container) return;
@@ -62,14 +66,14 @@ export default function FavoritesCarousel({
         animationFrameRef.current = requestAnimationFrame(animateScroll);
     };
 
-    // Asegura que la animación esté activa
+    // asegura que la animación esté corriendo
     const ensureAnimation = () => {
         if (!animationFrameRef.current) {
             animationFrameRef.current = requestAnimationFrame(animateScroll);
         }
     };
 
-    // Inicia scroll suave hasta el objetivo
+    // mueve el scroll hacia una posición objetivo
     const startSmoothScroll = (nextTarget) => {
         const container = scrollRef.current;
         if (!container) return;
@@ -81,7 +85,7 @@ export default function FavoritesCarousel({
         ensureAnimation();
     };
 
-    // Centra un elemento en el carrusel
+    // centra visualmente una lista al hacer click
     const centerItem = (element) => {
         const container = scrollRef.current;
         if (!container || !element) return;
@@ -97,13 +101,16 @@ export default function FavoritesCarousel({
         startSmoothScroll(container.scrollLeft + diff);
     };
 
-    // Evento: rueda del mouse
+    // =========================================================
+    // ===== EVENTOS DEL MOUSE Y DEL CARRUSEL ==================
+    // =========================================================
+    // permite mover el carrusel con la rueda del mouse
     const handleWheel = (e) => {
         e.preventDefault();
         startSmoothScroll(targetScrollRef.current + e.deltaY * 1.15);
     };
 
-    // Evento: movimiento del mouse
+    // mueve el carrusel automáticamente al acercar el mouse a los bordes
     const handleMouseMove = (e) => {
         const container = scrollRef.current;
         if (!container) return;
@@ -134,13 +141,22 @@ export default function FavoritesCarousel({
         hoverSpeedRef.current = 0;
     };
 
-    // Evento: mouse sale del carrusel
+    // detiene el scroll automático cuando el mouse sale
     const handleMouseLeave = () => {
         hoverDirectionRef.current = 0;
         hoverSpeedRef.current = 0;
     };
 
-    // Limpieza al desmontar
+    // selecciona una lista y la centra en el carrusel
+    const handleSelectLista = (e, lista) => {
+        centerItem(e.currentTarget);
+        onSelectLista?.(lista);
+    };
+
+    // =========================================================
+    // ===== EFECTOS Y LIMPIEZA ================================
+    // =========================================================
+    // cancela la animación al desmontar el componente
     useEffect(() => {
         return () => {
             if (animationFrameRef.current) {
@@ -149,11 +165,15 @@ export default function FavoritesCarousel({
         };
     }, []);
 
+    // =========================================================
+    // ===== RENDER DEL COMPONENTE =============================
+    // =========================================================
     return (
         <div className="flex min-w-0 flex-1 items-center justify-center">
             <div className="relative w-full max-w-[1020px] px-[92px]">
                 <div className="relative mx-auto w-full max-w-[920px]">
 
+                    {/* lista activa centrada */}
                     {listaActiva && (
                         <motion.div
                             key={listaActiva.id}
@@ -184,6 +204,7 @@ export default function FavoritesCarousel({
                         </motion.div>
                     )}
 
+                    {/* carrusel de listas */}
                     <div className="relative rounded-[2rem] border border-fuchsia-500/30 bg-black/95 px-4 py-4">
                         <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-24 rounded-l-[2rem] bg-gradient-to-r from-[#050507] via-[#050507]/90 to-transparent" />
                         <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-24 rounded-r-[2rem] bg-gradient-to-l from-[#050507] via-[#050507]/90 to-transparent" />
@@ -201,10 +222,7 @@ export default function FavoritesCarousel({
                                         key={lista.id}
                                         type="button"
                                         layoutId={`lista-${lista.id}`}
-                                        onClick={(e) => {
-                                            centerItem(e.currentTarget);
-                                            onSelectLista?.(lista);
-                                        }}
+                                        onClick={(e) => handleSelectLista(e, lista)}
                                         title={lista.nombre}
                                         className="group relative shrink-0 scale-100 opacity-90 transition duration-300 hover:opacity-100"
                                         whileHover={{ scale: 1.15 }}
@@ -229,6 +247,7 @@ export default function FavoritesCarousel({
                     </div>
                 </div>
 
+                {/* botón para gestionar listas */}
                 <button
                     type="button"
                     onClick={onAddLista}
