@@ -1,67 +1,153 @@
-import { Music, X } from "lucide-react";
+// ===============================
+// IMPORTACIONES
+// ===============================
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Music, X } from "lucide-react";
 
-import FavoritosList from "./contents/favoritos/FavoritosList";
 import FavoritosConfig from "./contents/favoritos/FavoritosConfig";
+import FavoritosList from "./contents/favoritos/FavoritosList";
 
-/*
-  ModalFavoritos.jsx
+// ===============================
+// HELPERS LOCALES
+// ===============================
+const MotionDiv = motion.div;
 
-  modal principal para gestionar favoritos.
-  este archivo tiene la estructura general del modal:
-  fondo, blur, cabecera, botón cerrar y contenido adaptable.
-*/
+const obtenerIdsListasConCancion = (listas = [], selectedSong) => {
+    if (!selectedSong?.id) return [];
 
-const listasDemo = [
-    {
-        id: 1,
-        nombre: "Mis Favoritas",
-        canciones: 4,
-        imagen:
-            "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300",
-    },
-    {
-        id: 2,
-        nombre: "Noche Profunda",
-        canciones: 2,
-        imagen:
-            "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=300",
-    },
-    {
-        id: 3,
-        nombre: "Rock Clásico",
-        canciones: 3,
-        imagen:
-            "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300",
-    },
-    {
-        id: 4,
-        nombre: "Canciones pop",
-        canciones: 5,
-        imagen:
-            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300",
-    },
-];
+    return listas
+        .filter((lista) =>
+            (lista.canciones || []).some((cancion) => cancion?.id === selectedSong.id)
+        )
+        .map((lista) => lista.id);
+};
 
+const tienenMismosIds = (idsA = [], idsB = []) => {
+    if (idsA.length !== idsB.length) return false;
+
+    const setB = new Set(idsB);
+    return idsA.every((id) => setB.has(id));
+};
+
+// ===============================
+// COMPONENTE PRINCIPAL
+// ===============================
 export default function ModalFavoritos({
     isOpen,
     onClose,
-    listas = listasDemo,
-    listaSeleccionadaId = 1,
-    onSeleccionarLista,
-    onAbrirAgregarCancion,
+    listas = [],
+    selectedSong,
+    onGuardarCambios,
+    onCrearLista,
+    onEliminarLista,
 }) {
+    // =============================
+    // ESTADOS
+    // =============================
+    const [seleccionOriginalIds, setSeleccionOriginalIds] = useState(() =>
+        obtenerIdsListasConCancion(listas, selectedSong)
+    );
+    const [listasSeleccionadasIds, setListasSeleccionadasIds] = useState(() =>
+        obtenerIdsListasConCancion(listas, selectedSong)
+    );
+    const [nombreNuevaLista, setNombreNuevaLista] = useState("");
+    const [isWorking, setIsWorking] = useState(false);
+    const [errorAccion, setErrorAccion] = useState(null);
+
     // =============================
     // DATOS DERIVADOS
     // =============================
-    // busca la lista seleccionada usando el id recibido
-    const listaSeleccionada =
-        listas.find((lista) => lista.id === listaSeleccionadaId) || listas[0];
+    const hayCambios = !tienenMismosIds(seleccionOriginalIds, listasSeleccionadasIds);
+    const tituloCancion =
+        selectedSong?.titulo || selectedSong?.title || "Selecciona una cancion";
 
+    // =============================
+    // FUNCIONES Y EVENTOS
+    // =============================
+    // alterna una lista sin tocar backend hasta guardar
+    const handleToggleLista = (listaId) => {
+        setListasSeleccionadasIds((prev) => {
+            if (prev.includes(listaId)) {
+                return prev.filter((id) => id !== listaId);
+            }
+
+            return [...prev, listaId];
+        });
+    };
+
+    // compara el estado inicial contra el actual y envia solo diferencias
+    const handleGuardarCambios = async () => {
+        if (!selectedSong?.id || !hayCambios) return;
+
+        const setOriginal = new Set(seleccionOriginalIds);
+        const setActual = new Set(listasSeleccionadasIds);
+
+        const listasAgregar = listasSeleccionadasIds.filter((id) => !setOriginal.has(id));
+        const listasQuitar = seleccionOriginalIds.filter((id) => !setActual.has(id));
+
+        try {
+            setIsWorking(true);
+            setErrorAccion(null);
+
+            await onGuardarCambios?.({
+                listasAgregar,
+                listasQuitar,
+                song: selectedSong,
+            });
+
+            onClose?.();
+        } catch (error) {
+            console.error("[ModalFavoritos] error guardando cambios:", error);
+            setErrorAccion("No se pudieron guardar los cambios.");
+        } finally {
+            setIsWorking(false);
+        }
+    };
+
+    // crea una nueva lista usando la portada de la cancion actual
+    const handleCrearNuevaLista = async () => {
+        const nombre = nombreNuevaLista.trim();
+        if (!nombre) return;
+
+        try {
+            setIsWorking(true);
+            setErrorAccion(null);
+
+            await onCrearLista?.(nombre, selectedSong);
+            setNombreNuevaLista("");
+        } catch (error) {
+            console.error("[ModalFavoritos] error creando lista:", error);
+            setErrorAccion("No se pudo crear la lista.");
+        } finally {
+            setIsWorking(false);
+        }
+    };
+
+    // elimina la lista y limpia su seleccion local
+    const handleEliminarLista = async (listaId) => {
+        try {
+            setIsWorking(true);
+            setErrorAccion(null);
+
+            await onEliminarLista?.(listaId);
+            setSeleccionOriginalIds((prev) => prev.filter((id) => id !== listaId));
+            setListasSeleccionadasIds((prev) => prev.filter((id) => id !== listaId));
+        } catch (error) {
+            console.error("[ModalFavoritos] error eliminando lista:", error);
+            setErrorAccion("No se pudo eliminar la lista.");
+        } finally {
+            setIsWorking(false);
+        }
+    };
+
+    // =============================
+    // RENDER PRINCIPAL
+    // =============================
     return (
         <AnimatePresence>
             {isOpen && (
-                <motion.div
+                <MotionDiv
                     className="
                         fixed inset-0 z-[999] flex items-center justify-center
                         bg-black/65 px-3 py-4 backdrop-blur-xl
@@ -71,10 +157,7 @@ export default function ModalFavoritos({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                 >
-                    {/* ============================= */}
-                    {/* MODAL PRINCIPAL */}
-                    {/* ============================= */}
-                    <motion.div
+                    <MotionDiv
                         className="
                             relative flex max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden
                             rounded-[1.6rem] border border-fuchsia-500/25
@@ -86,15 +169,9 @@ export default function ModalFavoritos({
                         exit={{ scale: 0.94, opacity: 0, y: 24 }}
                         transition={{ duration: 0.25, ease: "easeOut" }}
                     >
-                        {/* brillo decorativo superior */}
                         <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-fuchsia-500/10 blur-3xl" />
-
-                        {/* brillo decorativo inferior */}
                         <div className="pointer-events-none absolute bottom-0 right-20 h-40 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
 
-                        {/* ============================= */}
-                        {/* CABECERA DEL MODAL */}
-                        {/* ============================= */}
                         <div
                             className="
                                 relative flex shrink-0 items-center justify-between gap-4
@@ -116,11 +193,11 @@ export default function ModalFavoritos({
 
                                 <div className="min-w-0">
                                     <h2 className="truncate text-xl font-semibold text-white sm:text-2xl">
-                                        Gestor de música
+                                        Gestor de musica
                                     </h2>
 
                                     <p className="mt-1 line-clamp-1 text-xs text-white/55 sm:text-sm">
-                                        Administra tus listas y canciones favoritas
+                                        {tituloCancion}
                                     </p>
                                 </div>
                             </div>
@@ -139,9 +216,6 @@ export default function ModalFavoritos({
                             </button>
                         </div>
 
-                        {/* ============================= */}
-                        {/* CONTENIDO DEL MODAL */}
-                        {/* ============================= */}
                         <div
                             className="
                                 custom-scrollbar relative min-h-0 flex-1 overflow-y-auto
@@ -154,22 +228,28 @@ export default function ModalFavoritos({
                                     lg:grid-cols-[1.05fr_1fr] lg:gap-8
                                 "
                             >
-                                {/* columna izquierda */}
                                 <FavoritosList
                                     listas={listas}
-                                    listaSeleccionadaId={listaSeleccionada?.id}
-                                    onSeleccionarLista={onSeleccionarLista}
+                                    listasSeleccionadasIds={listasSeleccionadasIds}
+                                    isWorking={isWorking}
+                                    onSeleccionarLista={handleToggleLista}
+                                    onEliminarLista={handleEliminarLista}
                                 />
 
-                                {/* columna derecha */}
                                 <FavoritosConfig
-                                    listaSeleccionada={listaSeleccionada}
-                                    onAbrirAgregarCancion={onAbrirAgregarCancion}
+                                    selectedSong={selectedSong}
+                                    nombreNuevaLista={nombreNuevaLista}
+                                    onCambiarNombreNuevaLista={setNombreNuevaLista}
+                                    onCrearNuevaLista={handleCrearNuevaLista}
+                                    onGuardarCambios={handleGuardarCambios}
+                                    hayCambios={hayCambios}
+                                    isWorking={isWorking}
+                                    errorAccion={errorAccion}
                                 />
                             </div>
                         </div>
-                    </motion.div>
-                </motion.div>
+                    </MotionDiv>
+                </MotionDiv>
             )}
         </AnimatePresence>
     );

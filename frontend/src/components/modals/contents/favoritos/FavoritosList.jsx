@@ -9,8 +9,10 @@ import FavoritosListItem from "./FavoritosListItem";
 
 export default function FavoritosList({
     listas = [],
-    listaSeleccionadaId,
+    listasSeleccionadasIds = [],
+    isWorking = false,
     onSeleccionarLista,
+    onEliminarLista,
 }) {
     return (
         <section className="flex min-h-0 flex-col">
@@ -18,7 +20,7 @@ export default function FavoritosList({
             {/* TÍTULO DE LA SECCIÓN */}
             {/* ============================= */}
             <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-fuchsia-400 sm:text-sm">
-                Selecciona una lista
+                Selecciona una o varias listas
             </h3>
 
             {/* ============================= */}
@@ -41,8 +43,10 @@ export default function FavoritosList({
                         <FavoritosListItem
                             key={lista.id}
                             lista={lista}
-                            isActive={lista.id === listaSeleccionadaId}
+                            isActive={listasSeleccionadasIds.includes(lista.id)}
+                            disabled={isWorking}
                             onSeleccionarLista={() => onSeleccionarLista?.(lista.id)}
+                            onEliminarLista={() => onEliminarLista?.(lista.id)}
                         />
                     ))}
                 </div>

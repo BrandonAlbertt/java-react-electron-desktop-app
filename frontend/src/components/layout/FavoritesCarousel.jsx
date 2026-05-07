@@ -3,6 +3,7 @@ import { ListPlus } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function FavoritesCarousel({
+    // MARK: props
     listas = [],
     listaSeleccionadaId,
     onSeleccionarLista,

@@ -1,94 +1,190 @@
-
 // ===============================
-// IMPORTS: LIBRERIAS Y COMPONENTES
+// IMPORTACIONES
 // ===============================
-import { useState, useMemo } from "react";
-import PlayerBar from "../components/layout/PlayerBar";
-import PlaylistPanel from "../components/music/PlaylistPanel";
-import NowPlayingPanel from "../components/music/NowPlayingPanel";
-import ExplorePanel from "../components/music/ExplorePanel";
+import { useMemo, useState } from "react";
+import AppModal from "../components/layout/AppModal";
+import PlayerBar from "/src/components/layout/PlayerBar.jsx";
 import TopHeader from "../components/layout/TopHeader";
 import CarouselGeneres from "../components/music/CarouselGeneres";
+import ExplorePanel from "../components/music/ExplorePanel";
+import NowPlayingPanel from "../components/music/NowPlayingPanel";
+import PlaylistPanel from "../components/music/PlaylistPanel";
 import ModalFavoritos from "../components/modals/ModalFavoritos";
 import { useBiblioteca } from "../hooks/useBiblioteca";
 import { useExplorar } from "../hooks/useExplorar";
+import { useListas } from "../hooks/useListas";
 
+// ===============================
+// COMPONENTE PRINCIPAL
+// ===============================
 export default function Home({ usuario, onLogout }) {
     // ===============================
-    // ESTADOS PRINCIPALES: HOOKS Y DATOS GLOBALES
+    // HOOKS Y DATOS GLOBALES
     // ===============================
-    // datos de usuario y biblioteca, obtiene datos por usuarioId
     const usuarioId = usuario?.id;
+
+    // carga usuario y biblioteca del usuario activo
     const {
-        usuario: usuarioCompleto, // renombrado por conflicto de nombres
+        usuario: usuarioCompleto,
         listas,
-        canciones,
-        loading,
-        error,
+        recargarBiblioteca,
+        setListas,
     } = useBiblioteca(usuarioId);
 
-    // datos generales para explorar (generos, grupos, canciones)
+    // expone acciones para listas sin cambiar el flujo actual
+    const {
+        crearLista,
+        agregarCancion,
+        quitarCancion,
+        borrarLista,
+    } = useListas();
+
+    // carga canciones, grupos y generos para Explore
     const {
         data: explorarData,
         loading: loadingExplorar,
         error: errorExplorar,
     } = useExplorar();
 
-    // estado para el genero seleccionado
+    // ===============================
+    // ESTADOS Y REFERENCIAS
+    // ===============================
     const [generoSeleccionado, setGeneroSeleccionado] = useState(null);
-    // estados de control de reproduccion y ui
-    const [shuffleActivo, setShuffleActivo] = useState(false); // modo aleatorio
-    const [repeatActivo, setRepeatActivo] = useState(false); // modo repetir
-    const [historialShuffle, setHistorialShuffle] = useState([]); // historial de aleatorio
-    const [cancionActiva, setCancionActiva] = useState(null); // cancion seleccionada
-    const [isPlaying, setIsPlaying] = useState(false); // estado de reproduccion
-    const [origenReproduccion, setOrigenReproduccion] = useState(null); // origen de la cancion
-    const [colaReproduccion, setColaReproduccion] = useState([]); // guarda la cola/lista de rerproduccion actual para navegacion
-    const [listaSeleccionadaId, setListaSeleccionadaId] = useState(null); // lista seleccionada
-    const [modalType, setModalType] = useState(null); // tipo de modal
-    const [selectedSong, setSelectedSong] = useState(null); // cancion para el modal
+    const [shuffleActivo, setShuffleActivo] = useState(false);
+    const [repeatActivo, setRepeatActivo] = useState(false);
+    const [historialShuffle, setHistorialShuffle] = useState([]);
+    const [cancionActiva, setCancionActiva] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [origenReproduccion, setOrigenReproduccion] = useState(null);
+    const [colaReproduccion, setColaReproduccion] = useState([]);
+    const [listaSeleccionadaId, setListaSeleccionadaId] = useState(null);
+    const [modalType, setModalType] = useState(null);
+    const [selectedSong, setSelectedSong] = useState(null);
+    const [modalFavoritosKey, setModalFavoritosKey] = useState(0);
 
     // ===============================
-    // MEMOS DERIVADOS: CALCULOS MEMORIZADOS
+    // DATOS DERIVADOS Y MEMOS
     // ===============================
-    // obtiene la lista seleccionada a partir del id
+    // busca la lista seleccionada usando el id guardado en Home
     const listaSeleccionada = useMemo(() => {
         return listas.find((lista) => lista.id === listaSeleccionadaId) || null;
     }, [listas, listaSeleccionadaId]);
 
-    // ===============================
-    // HANDLERS Y FUNCIONES DE UI: AGRUPADOS POR PROPOSITO
-    // ===============================
+    // filtra canciones segun el genero activo
+    const cancionesFiltradasPorGenero = useMemo(() => {
+        if (!generoSeleccionado) return explorarData?.canciones || [];
 
-    // selecciona una lista
+        return (explorarData?.canciones || []).filter((cancion) =>
+            cancion.generos.includes(generoSeleccionado.nombre)
+        );
+    }, [explorarData?.canciones, generoSeleccionado]);
+
+    // filtra grupos usando las canciones del genero seleccionado
+    const gruposFiltradosPorGenero = useMemo(() => {
+        if (!generoSeleccionado) return explorarData?.grupos || [];
+
+        const nombres = cancionesFiltradasPorGenero.map((cancion) => cancion.grupo);
+
+        return (explorarData?.grupos || []).filter((grupo) =>
+            nombres.includes(grupo.nombre)
+        );
+    }, [explorarData?.grupos, cancionesFiltradasPorGenero, generoSeleccionado]);
+
+    // ===============================
+    // FUNCIONES Y EVENTOS
+    // ===============================
+    // guarda la lista elegida para usarla en Playlist y Explore
     const handleSeleccionarLista = (listaId) => {
         console.log("ID de la lista que recibido en Home:", listaId);
         setListaSeleccionadaId(listaId);
     };
 
-    // abre modal para gestionar listas
-    const handleAbrirGestionListas = () => {
-        setSelectedSong(null);
-        setModalType("gestionarListas");
+    // abre el modal de listas generales o el modal de musica
+    const handleAbrirGestionListas = (origen = "desconocido") => {
+        if (origen === "TopHeader") {
+            setModalType("gestionLista");
+            setSelectedSong(null);
+            return;
+        }
+
+        if (origen === "PlaylistPanel") {
+            setModalType("gestionMusica");
+            setSelectedSong(null);
+        }
     };
 
-    // abre modal para agregar musica a lista
-    const handleAbrirAgregarCancion = (cancion) => {
-        setSelectedSong(cancion);
+    // SongItem, ExploreSongItem y PlayerBar envian la cancion a Home
+    const handleAbrirModalFavoritos = (song) => {
+        if (!song) return;
+
+        setSelectedSong(song);
+        setModalFavoritosKey((prev) => prev + 1);
         setModalType("addMusicList");
     };
 
-    // cierra cualquier modal
+    // aplica al backend los cambios marcados en ModalFavoritos
+    const handleGuardarCambiosFavoritos = async ({
+        listasAgregar = [],
+        listasQuitar = [],
+        song,
+    }) => {
+        if (!song?.id) return null;
+
+        await Promise.all([
+            ...listasAgregar.map((listaId) => agregarCancion(listaId, song.id)),
+            ...listasQuitar.map((listaId) => quitarCancion(listaId, song.id)),
+        ]);
+
+        await recargarBiblioteca?.();
+        return true;
+    };
+
+    // crea una lista nueva usando la portada de la cancion actual
+    const handleCrearListaFavoritos = async (nombreLista, song) => {
+        const nombre = nombreLista?.trim();
+        if (!usuarioId || !nombre) return null;
+
+        const urlImagen =
+            song?.imagen_grupo || song?.imagen || song?.imagen_url || song?.groupImage || null;
+
+        const data = await crearLista(usuarioId, nombre, urlImagen);
+        const listaCreada = data?.lista || data;
+
+        if (listaCreada?.id) {
+            setListas((prev) => [
+                ...prev,
+                {
+                    ...listaCreada,
+                    imagen: listaCreada.imagen || listaCreada.url_imagen || urlImagen,
+                    canciones: listaCreada.canciones || [],
+                },
+            ]);
+        }
+
+        return data;
+    };
+
+    // elimina una lista y limpia la seleccion si era la activa
+    const handleEliminarListaFavoritos = async (listaId) => {
+        if (!listaId) return null;
+
+        const data = await borrarLista(listaId);
+        setListas((prev) => prev.filter((lista) => lista.id !== listaId));
+
+        if (listaSeleccionadaId === listaId) {
+            setListaSeleccionadaId(null);
+        }
+
+        return data;
+    };
+
+    // cierra cualquier modal abierto
     const handleCerrarModal = () => {
         setModalType(null);
         setSelectedSong(null);
     };
 
-
-    // ===============================
-    // REPRODUCIR CANCIÓN GLOBAL
-    // ===============================
-    // recibe canción, origen y lista desde donde se reproducirá
+    // recibe la cancion, el origen y la cola actual
     const reproducirCancion = (song, origen = "desconocido", cola = []) => {
         const esMismaCancion =
             cancionActiva?.id === song.id &&
@@ -107,21 +203,16 @@ export default function Home({ usuario, onLogout }) {
         setIsPlaying(true);
     };
 
-    // ===============================
-    // SIGUIENTE CANCIÓN
-    // ===============================
-    // avanza según la cola actual: playlist o explore
+    // avanza segun la cola actual: playlist o explore
     const handleSiguienteCancion = () => {
         const listaActual = colaReproduccion;
 
         if (!listaActual.length) return;
 
-        // si la lista solo tiene una canción, la reproduce de nuevo
         if (listaActual.length === 1) {
             setIsPlaying(true);
             return;
         }
-
 
         if (shuffleActivo) {
             const cancionesDisponibles = listaActual.filter(
@@ -155,7 +246,7 @@ export default function Home({ usuario, onLogout }) {
 
             const randomSong =
                 cancionesDisponibles[
-                Math.floor(Math.random() * cancionesDisponibles.length)
+                    Math.floor(Math.random() * cancionesDisponibles.length)
                 ];
 
             setHistorialShuffle((prev) => [...prev, randomSong.id]);
@@ -185,10 +276,7 @@ export default function Home({ usuario, onLogout }) {
         );
     };
 
-    // ===============================
-    // CANCIÓN ANTERIOR
-    // ===============================
-    // retrocede según la cola actual: playlist o explore
+    // retrocede segun la cola actual
     const handleAnteriorCancion = () => {
         const listaActual = colaReproduccion;
 
@@ -215,69 +303,49 @@ export default function Home({ usuario, onLogout }) {
         );
     };
 
-    // alterna modo aleatorio
+    // activa o desactiva el modo aleatorio
     const handleToggleShuffle = () => {
         setShuffleActivo((prev) => !prev);
         setHistorialShuffle([]);
     };
 
-    // alterna modo repetir
+    // activa o desactiva repetir
     const handleToggleRepeat = () => {
         setRepeatActivo((prev) => !prev);
     };
 
     // ===============================
-    // FUNCIONES DE EXPLORE PANEL
+    // RENDER PRINCIPAL
     // ===============================
-    // filtra canciones segun genero seleccionado
-    const cancionesFiltradasPorGenero = useMemo(() => {
-        if (!generoSeleccionado) return explorarData?.canciones || [];
-
-        return (explorarData?.canciones || []).filter((cancion) =>
-            cancion.generos.includes(generoSeleccionado.nombre)
-        );
-    }, [explorarData?.canciones, generoSeleccionado]);
-
-    // filtra grupos segun canciones del genero
-    const gruposFiltradosPorGenero = useMemo(() => {
-        if (!generoSeleccionado) return explorarData?.grupos || [];
-
-        const nombres = cancionesFiltradasPorGenero.map((cancion) => cancion.grupo);
-
-        return (explorarData?.grupos || []).filter((grupo) =>
-            nombres.includes(grupo.nombre)
-        );
-    }, [explorarData?.grupos, cancionesFiltradasPorGenero, generoSeleccionado]);
-
-    // ===============================
-    // RENDER: ESTRUCTURA VISUAL DE LA PAGINA PRINCIPAL
-    // ===============================
-    // renderiza la vista principal y distribuye handlers
     return (
         <section className="relative h-full w-full bg-gradient-to-b from-[#0d0d12] via-[#09090d] to-[#050507]">
             <div className="flex h-full w-full flex-col">
-                {/* renderiza header superior */}
                 <TopHeader
                     listas={listas}
                     usuarioPerfil={usuarioCompleto}
                     onLogout={onLogout}
                     listaSeleccionadaId={listaSeleccionadaId}
                     onSeleccionarLista={handleSeleccionarLista}
-                    onAbrirGestionListas={handleAbrirGestionListas}
+                    onAbrirGestionListas={() => handleAbrirGestionListas("TopHeader")}
                 />
 
-                {/* renderiza contenido central */}
                 <div className="flex-1 overflow-hidden p-3 md:p-4">
                     <div className="grid h-full grid-cols-12 gap-3 md:gap-4">
                         <aside className="col-span-12 min-h-0 rounded-2xl border border-fuchsia-500/20 bg-[#0a0a0f] lg:col-span-4">
                             <PlaylistPanel
                                 onSeleccionarCancion={(cancion) =>
-                                    reproducirCancion(cancion, "PlaylistPanel", listaSeleccionada?.canciones || [])
+                                    reproducirCancion(
+                                        cancion,
+                                        "PlaylistPanel",
+                                        listaSeleccionada?.canciones || []
+                                    )
                                 }
                                 lista={listaSeleccionada}
                                 cancionActivaId={cancionActiva?.id}
                                 isPlaying={isPlaying}
                                 origenReproduccion={origenReproduccion}
+                                onAbrirGestionListas={() => handleAbrirGestionListas("PlaylistPanel")}
+                                onAbrirModalFavoritos={handleAbrirModalFavoritos}
                             />
                         </aside>
 
@@ -291,24 +359,25 @@ export default function Home({ usuario, onLogout }) {
                                 generoSeleccionadoId={generoSeleccionado?.id}
                                 onSeleccionarGenero={setGeneroSeleccionado}
                             />
+
                             <ExplorePanel
                                 grupos={gruposFiltradosPorGenero}
                                 canciones={cancionesFiltradasPorGenero}
                                 loading={loadingExplorar}
                                 error={errorExplorar}
-                                generoSeleccionado={generoSeleccionado}
                                 onSeleccionarCancion={(cancion, colaExplore) =>
                                     reproducirCancion(cancion, "ExplorePanel", colaExplore)
                                 }
                                 cancionActivaId={cancionActiva?.id}
                                 isPlaying={isPlaying}
                                 origenReproduccion={origenReproduccion}
+                                onAbrirModalFavoritos={handleAbrirModalFavoritos}
+                                listaSeleccionada={listaSeleccionada}
                             />
                         </aside>
                     </div>
                 </div>
 
-                {/* renderiza barra inferior de reproduccion */}
                 <footer className="h-[120px] w-full shrink-0 border-t border-white/10 px-3 py-3 md:h-[130px] md:px-4">
                     <PlayerBar
                         cancion={cancionActiva}
@@ -321,26 +390,33 @@ export default function Home({ usuario, onLogout }) {
                         onAlternarShuffle={handleToggleShuffle}
                         onAlternarRepeat={handleToggleRepeat}
                         onFinalizarCancion={() => {
-                            // renderiza repeticion o siguiente cancion al terminar
                             if (repeatActivo) {
                                 setIsPlaying(false);
                                 setTimeout(() => setIsPlaying(true), 0);
                                 return;
                             }
+
                             handleSiguienteCancion();
                         }}
+                        onAbrirModalFavoritos={handleAbrirModalFavoritos}
                     />
                 </footer>
             </div>
 
-            {/* renderiza modal de favoritos */}
             <ModalFavoritos
-                isOpen={modalType === "gestionarListas" || modalType === "addMusicList"}
+                key={modalFavoritosKey}
+                isOpen={modalType === "addMusicList"}
                 onClose={handleCerrarModal}
                 listas={listas}
-                listaSeleccionadaId={listaSeleccionadaId}
-                onSeleccionarLista={handleSeleccionarLista}
-                onAbrirAgregarCancion={handleAbrirAgregarCancion}
+                selectedSong={selectedSong}
+                onGuardarCambios={handleGuardarCambiosFavoritos}
+                onCrearLista={handleCrearListaFavoritos}
+                onEliminarLista={handleEliminarListaFavoritos}
+            />
+
+            <AppModal
+                type={modalType === "gestionLista" ? "gestionLista" : null}
+                onClose={handleCerrarModal}
             />
         </section>
     );

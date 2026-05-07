@@ -14,7 +14,7 @@
   - error: null si todo bien, o mensaje de error
 */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { obtenerBibliotecaUsuario } from "../api/bibliotecaUsuarioApi";
 
 export function useBiblioteca(usuarioId) {
@@ -24,52 +24,61 @@ export function useBiblioteca(usuarioId) {
     const [loading, setLoading] = useState(true);      // Esta cargando?
     const [error, setError] = useState(null);          // Hay error?
 
-    // Se ejecuta cuando el componente carga o cuando usuarioId cambia
-    useEffect(() => {
+    // ===============================
+    // CARGAR BIBLIOTECA
+    // ===============================
+    // recarga usuario y listas para mantener Home como fuente principal de datos
+    const recargarBiblioteca = useCallback(async () => {
         // Validar que hay un usuario ID valido
         if (!usuarioId) {
             setLoading(false);
             setError("Usuario no valido");
-            return;
+            return null;
         }
 
-        // Funcion para cargar datos
-        async function cargar() {
-            try {
-                setLoading(true);
-                setError(null);
+        try {
+            setLoading(true);
+            setError(null);
 
-                // Obtener datos del servidor via obtenerBibliotecaUsuario
-                const data = await obtenerBibliotecaUsuario(usuarioId);
+            // Obtener datos del servidor via obtenerBibliotecaUsuario
+            const data = await obtenerBibliotecaUsuario(usuarioId);
 
-                // Mostrar en consola del navegador (F12) para rastrear datos
-                console.log("[useBiblioteca] respuesta completa:", data);
-                console.log("[useBiblioteca] usuario:", data.usuario);
-                console.log("[useBiblioteca] listas:", data.listas);
+            // Mostrar en consola del navegador (F12) para rastrear datos
+            console.log("[useBiblioteca] respuesta completa:", data);
+            console.log("[useBiblioteca] usuario:", data.usuario);
+            console.log("[useBiblioteca] listas:", data.listas);
 
-                // Extraer todas las canciones en un solo array
-                const canciones = (data.listas ?? []).flatMap((lista) => lista.canciones ?? []);
-                console.log("[useBiblioteca] canciones:", canciones);
+            // Extraer todas las canciones en un solo array
+            const canciones = (data.listas ?? []).flatMap((lista) => lista.canciones ?? []);
+            console.log("[useBiblioteca] canciones:", canciones);
 
-                // Guardar datos en el estado
-                setUsuario(data.usuario);
-                setListas(data.listas);
-            } catch (err) {
-                // Si hay error, mostrarlo
-                console.error("[useBiblioteca] error cargando biblioteca:", err);
-                setError("Error cargando biblioteca");
-            } finally {
-                // Siempre dejar de cargar (haya error o no)
-                setLoading(false);
-            }
+            // Guardar datos en el estado
+            setUsuario(data.usuario);
+            setListas(data.listas ?? []);
+            return data;
+        } catch (err) {
+            // Si hay error, mostrarlo
+            console.error("[useBiblioteca] error cargando biblioteca:", err);
+            setError("Error cargando biblioteca");
+            return null;
+        } finally {
+            // Siempre dejar de cargar (haya error o no)
+            setLoading(false);
         }
+    }, [usuarioId]);
 
-        // Ejecutar la funcion cargar
-        cargar();
-    }, [usuarioId]); // Ejecutar cuando usuarioId cambie
+    // Se ejecuta cuando el componente carga o cuando usuarioId cambia
+    useEffect(() => {
+        // Ejecutar la funcion cargar fuera del cuerpo sincrono del efecto
+        const timerId = setTimeout(() => {
+            recargarBiblioteca();
+        }, 0);
+
+        return () => clearTimeout(timerId);
+    }, [recargarBiblioteca]); // Ejecutar cuando usuarioId cambie
 
     // Retornar datos y estados para usar en componentes
-    return { usuario, listas, loading, error };
+    return { usuario, listas, loading, error, recargarBiblioteca, setListas };
 }
 
 /*

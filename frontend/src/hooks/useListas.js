@@ -1,48 +1,45 @@
+// ===============================
+// IMPORTACIONES
+// ===============================
 import { useCallback, useState } from "react";
-
 import {
-    obtenerListasUsuario,
-    crearListaUsuario,
     agregarCancionALista,
-    quitarCancionDeLista,
+    crearListaUsuario,
     eliminarLista,
+    obtenerListasUsuario,
+    quitarCancionDeLista,
 } from "../api/listasApi";
 
 /*
-|--------------------------------------------------------------------------
-| USE LISTAS
-|--------------------------------------------------------------------------
-| Hook para manejar acciones de listas desde el frontend.
-|
-| Este hook sirve para:
-| - obtener listas de un usuario
-| - crear listas
-| - agregar canciones a una lista
-| - quitar canciones de una lista
-| - eliminar listas completas
-|
-| Aquí SÍ se maneja estado de React.
+  useListas.js
+
+  hook para manejar acciones de listas desde el frontend.
+  mantiene estados de carga, errores y listas sin cambiar el contrato actual.
 */
 
+// ===============================
+// HOOK PRINCIPAL
+// ===============================
 export function useListas() {
     // ===============================
-    // ESTADOS DEL HOOK
+    // ESTADOS
     // ===============================
     const [listas, setListas] = useState([]);
     const [loadingListas, setLoadingListas] = useState(false);
     const [errorListas, setErrorListas] = useState(null);
 
     // ===============================
-    // CARGAR LISTAS DEL USUARIO
+    // FUNCIONES
     // ===============================
+    // carga las listas de un usuario
     const cargarListas = useCallback(async (usuarioId) => {
         try {
             setLoadingListas(true);
             setErrorListas(null);
 
             const data = await obtenerListasUsuario(usuarioId);
-
             setListas(data);
+
             return data;
         } catch (error) {
             console.error("Error al cargar listas:", error);
@@ -53,15 +50,23 @@ export function useListas() {
         }
     }, []);
 
-    // ===============================
-    // CREAR NUEVA LISTA
-    // ===============================
-    const crearLista = useCallback(async (usuarioId, nuevaLista) => {
+    // crea una lista y la agrega al estado local
+    const crearLista = useCallback(async (usuarioId, nombre, urlImagen = null) => {
         try {
             setLoadingListas(true);
             setErrorListas(null);
 
+            const nuevaLista = {
+                nombre,
+                url_imagen: urlImagen,
+            };
+
             const data = await crearListaUsuario(usuarioId, nuevaLista);
+            const listaCreada = data?.lista || data;
+
+            if (listaCreada?.id) {
+                setListas((prev) => [...prev, listaCreada]);
+            }
 
             return data;
         } catch (error) {
@@ -73,55 +78,48 @@ export function useListas() {
         }
     }, []);
 
-    // ===============================
-    // AGREGAR CANCIÓN A LISTA
-    // ===============================
+    // agrega una cancion a una lista
     const agregarCancion = useCallback(async (listaId, cancionId) => {
         try {
             setLoadingListas(true);
             setErrorListas(null);
 
             const data = await agregarCancionALista(listaId, cancionId);
-
             return data;
         } catch (error) {
-            console.error("Error al agregar canción a la lista:", error);
-            setErrorListas("No se pudo agregar la canción a la lista.");
+            console.error("Error al agregar cancion a la lista:", error);
+            setErrorListas("No se pudo agregar la cancion a la lista.");
             return null;
         } finally {
             setLoadingListas(false);
         }
     }, []);
 
-    // ===============================
-    // QUITAR CANCIÓN DE LISTA
-    // ===============================
+    // quita una cancion de una lista
     const quitarCancion = useCallback(async (listaId, cancionId) => {
         try {
             setLoadingListas(true);
             setErrorListas(null);
 
             const data = await quitarCancionDeLista(listaId, cancionId);
-
             return data;
         } catch (error) {
-            console.error("Error al quitar canción de la lista:", error);
-            setErrorListas("No se pudo quitar la canción de la lista.");
+            console.error("Error al quitar cancion de la lista:", error);
+            setErrorListas("No se pudo quitar la cancion de la lista.");
             return null;
         } finally {
             setLoadingListas(false);
         }
     }, []);
 
-    // ===============================
-    // ELIMINAR LISTA COMPLETA
-    // ===============================
+    // elimina una lista completa
     const borrarLista = useCallback(async (listaId) => {
         try {
             setLoadingListas(true);
             setErrorListas(null);
 
             const data = await eliminarLista(listaId);
+            setListas((prev) => prev.filter((lista) => lista.id !== listaId));
 
             return data;
         } catch (error) {
@@ -134,15 +132,13 @@ export function useListas() {
     }, []);
 
     // ===============================
-    // RETORNO DEL HOOK
+    // RETORNO
     // ===============================
     return {
         listas,
         setListas,
-
         loadingListas,
         errorListas,
-
         cargarListas,
         crearLista,
         agregarCancion,
