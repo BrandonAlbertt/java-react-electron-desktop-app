@@ -61,3 +61,9 @@ export async function eliminarLista(listaId) {
     const response = await axiosClient.delete(`/api/listas/${listaId}`);
     return response.data;
 }
+
+export async function renombrarLista(listaId, nuevoNombre) {
+    const respose = await axiosClient.put(`/api/listas/${listaId}/`);
+    return respose.data;
+    
+}

@@ -39,6 +39,7 @@ async function obtenerCanciones() {
         SELECT
             m.id,
             m.titulo,
+            m.letra,
             m.link_audio,
             m.duracion_segundos,
             gm.nombre AS grupo,
@@ -53,6 +54,7 @@ async function obtenerCanciones() {
         GROUP BY
             m.id,
             m.titulo,
+            m.letra,
             m.link_audio,
             m.duracion_segundos,
             gm.nombre
@@ -63,6 +65,7 @@ async function obtenerCanciones() {
     return rows.map((cancion) => ({
         id: cancion.id,
         titulo: cancion.titulo,
+        letra: cancion.letra,
         grupo: cancion.grupo,
         // Si hay géneros en texto, los separa en un arreglo; si no, devuelve []
         generos: cancion.generos ? cancion.generos.split(",") : [],

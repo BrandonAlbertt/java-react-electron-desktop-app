@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 
 const {
+    renombrarLista,
     crearLista,
     listarListasPorUsuario,
     agregarCancionALista,
@@ -11,6 +12,10 @@ const {
     eliminarLista,
 } = require("../controllers/playlist.controller");
 
+
+// Ruta final: PUT /api/listas/:listaId
+// Renombra una lista existente
+router.put("/listas/:listaId", renombrarLista);
 // En app.js se monta: app.use("/api", playlistRoutes)
 // Ruta final: POST /api/usuarios/:usuarioId/listas
 // Crea una nueva lista para un usuario

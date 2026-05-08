@@ -10,6 +10,7 @@ import ExplorePanel from "../components/music/ExplorePanel";
 import NowPlayingPanel from "../components/music/NowPlayingPanel";
 import PlaylistPanel from "../components/music/PlaylistPanel";
 import ModalFavoritos from "../components/modals/ModalFavoritos";
+import ModalPlaylist from "../components/modals/ModalPlaylist";
 import { useBiblioteca } from "../hooks/useBiblioteca";
 import { useExplorar } from "../hooks/useExplorar";
 import { useListas } from "../hooks/useListas";
@@ -102,8 +103,8 @@ export default function Home({ usuario, onLogout }) {
     // abre el modal de listas generales o el modal de musica
     const handleAbrirGestionListas = (origen = "desconocido") => {
         if (origen === "TopHeader") {
-            setModalType("gestionLista");
             setSelectedSong(null);
+            setModalType("gestionLista");
             return;
         }
 
@@ -138,6 +139,20 @@ export default function Home({ usuario, onLogout }) {
         await recargarBiblioteca?.();
         return true;
     };
+
+    // renombrar una lista musical
+    const handleRenombrarListaFavoritos = async (listaId, nuevoNombre) => {
+        if (!listaId || !nuevoNombre) return null;
+
+        const data = await renombrarLista(listaId, nuevoNombre);
+        // actualiza la lista renombrada en el estado local
+        setListas((prev) =>
+            prev.map((lista) =>)
+                lista.id === listaId
+                ? { ...lista, nombre: nuevoNombre }
+                : lista
+        );
+    }
 
     // crea una lista nueva usando la portada de la cancion actual
     const handleCrearListaFavoritos = async (nombreLista, song) => {
@@ -414,9 +429,11 @@ export default function Home({ usuario, onLogout }) {
                 onEliminarLista={handleEliminarListaFavoritos}
             />
 
-            <AppModal
-                type={modalType === "gestionLista" ? "gestionLista" : null}
+            <ModalPlaylist
+                isOpen={modalType === "gestionLista"}
                 onClose={handleCerrarModal}
+                listas={listas}
+                onRenombrarLista={handleRenombrarListaFavoritos}
             />
         </section>
     );

@@ -149,6 +149,56 @@ async function eliminarLista(req, res) {
     }
 }
 
+// Renombra una playlist existente.
+// Llega desde: PUT /api/listas/:listaId
+async function renombrarLista(req, res) { 
+    try {
+        const { listaId } = req.params;
+        const { nuevoNombre } = req.body;
+
+        if (!nuevoNombre) {
+            return res.status(400).json({
+                mensaje: "El nuevo nombre es obligatorio",
+            });
+        }
+
+        // verifica que la lista exista
+        const listaActual = await playlistModel.obtenerListaPorId(listaId);
+        if (!listaActual) {
+            return res.status(404).json({
+                mensaje: "Lista no encontrada",
+            });
+        }
+
+        // actualiza el nombre de la lista
+        const editado = await playlistModel.renombrarLista(listaId, nuevoNombre);
+
+        if (!editado) {
+            return res.status(404).json({
+                mensaje: "Lista no encontrada",
+            });
+        }
+
+        return res.json({
+            mensaje: "Lista renombrada correctamente",
+            lista: {
+                ...listaActual,
+                nombre: nuevoNombre,
+            },
+        });
+
+    } catch (error) {
+        console.error("Error al renombrar lista:", error);
+        res.status(500).json({
+            mensaje: "Error al renombrar lista",
+        });
+
+    }
+}
+
+
+
+
 // Exporta funciones para que las use routes/playlist.routes.js
 module.exports = {
     crearLista,
@@ -156,4 +206,5 @@ module.exports = {
     agregarCancionALista,
     quitarCancionDeLista,
     eliminarLista,
+    renombrarLista,
 };

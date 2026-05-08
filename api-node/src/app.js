@@ -258,6 +258,7 @@ app.listen(PORT, () => {
 |   DELETE http://localhost:3000/api/musica/1
 |
 | PLAYLIST (listas de reproducción)
+|   PUT    http://localhost:3000/api/listas/1
 |   POST   http://localhost:3000/api/usuarios/1/listas
 |   GET    http://localhost:3000/api/usuarios/1/listas
 |   POST   http://localhost:3000/api/listas/2/canciones/10

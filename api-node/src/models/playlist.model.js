@@ -75,6 +75,34 @@ async function eliminarLista(listaId) {
     return result.affectedRows;
 }
 
+async function obtenerListaPorId(listaId) {
+    const [rows] = await db.query(
+        `
+        SELECT
+            id,
+            nombre,
+            url_imagen,
+            usuario_id
+        FROM lista_musicales
+        WHERE id = ?
+        LIMIT 1
+    `,
+        [listaId]
+    );
+
+    return rows[0] || null;
+}
+
+async function renombrarLista(listaId, nuevoNombre) {
+    const [result] = await db.query(`
+        UPDATE lista_musicales
+        SET nombre = ?
+        WHERE id = ?
+    `, [nuevoNombre, listaId]);
+    
+    return result.affectedRows > 0;
+}
+
 // Exporta funciones para usarlas en el controller
 module.exports = {
     crearLista,
@@ -82,4 +110,6 @@ module.exports = {
     agregarCancionALista,
     quitarCancionDeLista,
     eliminarLista,
+    obtenerListaPorId,
+    renombrarLista,
 };
