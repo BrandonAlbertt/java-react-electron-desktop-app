@@ -38,6 +38,7 @@ export default function Home({ usuario, onLogout }) {
         agregarCancion,
         quitarCancion,
         borrarLista,
+        actualizarNombreLista,
     } = useListas();
 
     // carga canciones, grupos y generos para Explore
@@ -140,19 +141,24 @@ export default function Home({ usuario, onLogout }) {
         return true;
     };
 
-    // renombrar una lista musical
+    // renombra una lista usando el hook useListas y actualiza el estado local
     const handleRenombrarListaFavoritos = async (listaId, nuevoNombre) => {
-        if (!listaId || !nuevoNombre) return null;
-
-        const data = await renombrarLista(listaId, nuevoNombre);
-        // actualiza la lista renombrada en el estado local
-        setListas((prev) =>
-            prev.map((lista) =>)
-                lista.id === listaId
-                ? { ...lista, nombre: nuevoNombre }
-                : lista
-        );
-    }
+        // primero actualiza en la API y en el hook useListas
+        const resultado = await actualizarNombreLista(listaId, nuevoNombre);
+        
+        // luego actualiza también el estado de listas que viene de useBiblioteca para que se vea en el render
+        if (resultado) {
+            setListas((prev) =>
+                prev.map((lista) =>
+                    lista.id === listaId
+                        ? { ...lista, nombre: nuevoNombre }
+                        : lista
+                )
+            );
+        }
+        
+        return resultado;
+    };
 
     // crea una lista nueva usando la portada de la cancion actual
     const handleCrearListaFavoritos = async (nombreLista, song) => {
@@ -434,6 +440,7 @@ export default function Home({ usuario, onLogout }) {
                 onClose={handleCerrarModal}
                 listas={listas}
                 onRenombrarLista={handleRenombrarListaFavoritos}
+                onEliminarLista={handleEliminarListaFavoritos}
             />
         </section>
     );

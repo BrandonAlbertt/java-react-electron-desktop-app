@@ -8,6 +8,7 @@ import {
     eliminarLista,
     obtenerListasUsuario,
     quitarCancionDeLista,
+    renombrarLista,
 } from "../api/listasApi";
 
 /*
@@ -131,6 +132,35 @@ export function useListas() {
         }
     }, []);
 
+    // renombra una lista existente
+    const actualizarNombreLista = useCallback(async (listaId, nuevoNombre) => {
+        try {
+            setLoadingListas(true);
+            setErrorListas(null);
+
+            const data = await renombrarLista(listaId, nuevoNombre);
+
+            // actualiza el nombre en el estado local
+            setListas((prev) =>
+                //el prev es el array de listas actual, lo mapeamos para encontrar la que se renombró y actualizar su nombre
+                prev.map((lista) =>
+                    // si la lista.id coincide con el id de la lista que renombramos, actualizamos su nombre, sino la dejamos igual
+                    lista.id === listaId
+                        ? { ...lista, nombre: nuevoNombre } 
+                        : lista
+                )
+            );
+
+            return data;
+        } catch (error) {
+            console.error("Error al renombrar lista:", error);
+            setErrorListas("No se pudo renombrar la lista.");
+            return null;
+        } finally {
+            setLoadingListas(false);
+        }
+    }, []);
+
     // ===============================
     // RETORNO
     // ===============================
@@ -144,5 +174,6 @@ export function useListas() {
         agregarCancion,
         quitarCancion,
         borrarLista,
+        actualizarNombreLista,
     };
 }

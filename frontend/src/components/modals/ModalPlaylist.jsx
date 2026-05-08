@@ -14,7 +14,8 @@ export default function ModalPlaylist({
     isOpen = false,
     onClose,
     listas = [],
-    onRenombrarLista
+    onRenombrarLista,
+    onEliminarLista,
 }) {
     // =============================
     // ESTADOS DEL MODAL
@@ -22,6 +23,7 @@ export default function ModalPlaylist({
     const [tabActiva, setTabActiva] = useState("usuario");
     const [listasSeleccionadasIds, setListasSeleccionadasIds] = useState([]);
     const [nombreLista, setNombreLista] = useState("");
+    const [isWorking, setIsWorking] = useState(false);
 
     // =============================
     // LISTA SELECCIONADA
@@ -57,7 +59,7 @@ export default function ModalPlaylist({
         setListasSeleccionadasIds([listaId]);
     };
 
-    const handleGuardarCambios = () => {
+    const handleGuardarCambios = async () => {
         if (!listaSeleccionada || isWorking) return;
 
         const nuevoNombre = nombreLista.trim();
@@ -65,7 +67,20 @@ export default function ModalPlaylist({
         if (!nuevoNombre) return;
         if (nuevoNombre === listaSeleccionada.nombre) return;
 
-        onActualizarNombreLista?.(listaSeleccionada.id, nuevoNombre);
+        try {
+            setIsWorking(true);
+            const resultado = await onRenombrarLista?.(listaSeleccionada.id, nuevoNombre);
+            
+            // si la actualización fue exitosa, resetea el estado del input
+            if (resultado) {
+                // el input se actualizará automáticamente con el nuevo nombre gracias al useEffect
+                // y puedeGuardar se desactivará porque nombreLista === listaSeleccionada.nombre
+            }
+        } catch (error) {
+            console.error("Error al guardar cambios:", error);
+        } finally {
+            setIsWorking(false);
+        }
     };
 
     // =============================

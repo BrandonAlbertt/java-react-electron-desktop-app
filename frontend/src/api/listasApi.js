@@ -62,8 +62,16 @@ export async function eliminarLista(listaId) {
     return response.data;
 }
 
+
+// ===============================
+// RENOMBRAR UNA LISTA
+// ===============================
+// PUT /api/listas/:listaId
 export async function renombrarLista(listaId, nuevoNombre) {
-    const respose = await axiosClient.put(`/api/listas/${listaId}/`);
-    return respose.data;
-    
+    const response = await axiosClient.put(`/api/listas/${listaId}`, {
+        nuevoNombre,
+    });
+    // El backend devuelve { mensaje: "Lista renombrada correctamente" } o un error
+    return response.data;
 }
+
