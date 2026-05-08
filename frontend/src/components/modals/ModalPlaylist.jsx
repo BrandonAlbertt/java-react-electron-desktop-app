@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, Music, Shield, User, Save, Edit3, ListMusic } from "lucide-react";
+import { X, Music, Shield, User, Save, Edit3, ListMusic, Edit } from "lucide-react";
 import FavoritosList from "./contents/favoritos/FavoritosList";
+import GestionGrupoAndMusica from "./contents/gestion/GestionGrupoAndMusica";
+import EditListas from "./contents/favoritos/EditListas";
+
 
 /*
   ModalPlaylist.jsx
@@ -9,6 +12,7 @@ import FavoritosList from "./contents/favoritos/FavoritosList";
   tiene dos vistas: usuario y administrador.
   en usuario permite seleccionar una lista y editar su nombre.
 */
+
 
 export default function ModalPlaylist({
     isOpen = false,
@@ -100,10 +104,10 @@ export default function ModalPlaylist({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-4 backdrop-blur-xl">
             <div
                 className="
-                    relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden
+                    relative flex max-h-[calc(100vh-2rem)] w-full max-w-6xl flex-col overflow-hidden
                     rounded-[2rem] border border-fuchsia-500/30
                     bg-[#07030d]/95 shadow-[0_0_80px_rgba(217,70,239,0.22)]
                 "
@@ -116,7 +120,7 @@ export default function ModalPlaylist({
                 {/* ============================= */}
                 {/* CABECERA */}
                 {/* ============================= */}
-                <header className="relative flex items-center justify-between border-b border-white/10 px-8 py-6">
+                <header className="relative flex items-center justify-between border-b border-white/10 px-8 py-5">
                     <div className="flex items-center gap-4">
                         <div
                             className="
@@ -156,7 +160,7 @@ export default function ModalPlaylist({
                 {/* ============================= */}
                 {/* PESTAÑAS */}
                 {/* ============================= */}
-                <div className="relative flex justify-center px-8 pt-6">
+                <div className="relative flex justify-center px-8 pt-5">
                     <div
                         className="
                             flex rounded-2xl border border-white/10 bg-black/35 p-1
@@ -196,181 +200,34 @@ export default function ModalPlaylist({
                 {/* ============================= */}
                 {/* CUERPO DEL MODAL */}
                 {/* ============================= */}
-                <main className="relative min-h-0 flex-1 overflow-hidden p-8">
+                <main className="no-scrollbar relative min-h-0 flex-1 overflow-y-auto p-6 lg:p-7">
                     {tabActiva === "usuario" ? (
-                        <div className="grid h-full min-h-[430px] grid-cols-1 gap-7 lg:grid-cols-[1.05fr_1fr]">
-                            {/* ============================= */}
-                            {/* COLUMNA IZQUIERDA - LISTAS */}
-                            {/* ============================= */}
-                            <FavoritosList
-                                listas={listas}
-                                listasSeleccionadasIds={listasSeleccionadasIds}
-                                isWorking={isWorking}
-                                onSeleccionarLista={handleSeleccionarLista}
-                                onEliminarLista={onEliminarLista}
-                            />
 
-                            {/* ============================= */}
-                            {/* COLUMNA DERECHA - EDICION */}
-                            {/* ============================= */}
-                            <section className="flex min-h-0 flex-col border-t border-white/10 pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-                                <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-fuchsia-400 sm:text-sm">
-                                    Editar nombre de lista
-                                </h3>
+                        <EditListas 
+                            listas={listas}
+                            onSeleccionar={handleSeleccionarLista}
+                            listaSeleccionadaId={listaSeleccionadaId}
+                            onRenombrarLista={onRenombrarLista}
+                            onEliminarLista={onEliminarLista}
+                            listasSeleccionadasIds={listasSeleccionadasIds}
+                            nombreLista={nombreLista}
+                            onNombreListaChange={setNombreLista}
+                            onGuardar={handleGuardarCambios}
+                            isWorking={isWorking}
+                            puedeGuardar={puedeGuardar}
+                        />
 
-                                {!listaSeleccionada ? (
-                                    <div
-                                        className="
-                                            flex flex-1 flex-col items-center justify-center rounded-3xl
-                                            border border-white/10 bg-white/[0.025] p-8 text-center
-                                        "
-                                    >
-                                        <div
-                                            className="
-                                                mb-5 flex h-20 w-20 items-center justify-center rounded-full
-                                                border border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300
-                                            "
-                                        >
-                                            <ListMusic size={36} />
-                                        </div>
-
-                                        <h4 className="text-lg font-bold text-white">
-                                            Selecciona una lista
-                                        </h4>
-
-                                        <p className="mt-2 max-w-sm text-sm leading-6 text-white/45">
-                                            Elige una playlist de la columna izquierda para editar su nombre.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div
-                                        className="
-                                            flex flex-1 flex-col rounded-3xl border border-fuchsia-500/25
-                                            bg-black/25 p-5 shadow-[0_0_35px_rgba(217,70,239,0.10)]
-                                        "
-                                    >
-                                        {/* ============================= */}
-                                        {/* CARD DE LISTA SELECCIONADA */}
-                                        {/* ============================= */}
-                                        <div
-                                            className="
-                                                flex items-center gap-4 rounded-3xl border border-white/10
-                                                bg-white/[0.035] p-4
-                                            "
-                                        >
-                                            <img
-                                                src={listaSeleccionada.imagen}
-                                                alt={listaSeleccionada.nombre || "Playlist"}
-                                                className="
-                                                    h-20 w-20 rounded-3xl object-cover
-                                                    shadow-[0_0_25px_rgba(217,70,239,0.22)]
-                                                "
-                                            />
-
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-300">
-                                                    Lista seleccionada
-                                                </p>
-
-                                                <h4 className="mt-2 truncate text-xl font-bold text-white">
-                                                    {listaSeleccionada.nombre}
-                                                </h4>
-
-                                                <p className="mt-1 text-sm text-white/45">
-                                                    {cantidadCanciones} canciones
-                                                </p>
-                                            </div>
-
-                                            <div
-                                                className="
-                                                    hidden h-12 w-12 items-center justify-center rounded-2xl
-                                                    border border-fuchsia-500/30 bg-fuchsia-500/10
-                                                    text-fuchsia-300 sm:flex
-                                                "
-                                            >
-                                                <Edit3 size={22} />
-                                            </div>
-                                        </div>
-
-                                        {/* ============================= */}
-                                        {/* FORMULARIO */}
-                                        {/* ============================= */}
-                                        <div className="mt-7">
-                                            <label className="mb-3 block text-sm font-semibold text-white/70">
-                                                Cambiar nombre de lista
-                                            </label>
-
-                                            <input
-                                                type="text"
-                                                value={nombreLista}
-                                                onChange={(e) => setNombreLista(e.target.value)}
-                                                disabled={isWorking}
-                                                placeholder="Escribe el nuevo nombre..."
-                                                className="
-                                                    w-full rounded-2xl border border-fuchsia-500/35
-                                                    bg-[#090510] px-5 py-4 text-sm font-semibold text-white
-                                                    outline-none transition placeholder:text-white/30
-                                                    focus:border-fuchsia-400 focus:shadow-[0_0_25px_rgba(217,70,239,0.18)]
-                                                    disabled:cursor-wait disabled:opacity-60
-                                                "
-                                            />
-
-                                            <p className="mt-3 text-xs leading-5 text-white/40">
-                                                El nuevo nombre se guardará solo para la playlist seleccionada.
-                                            </p>
-                                        </div>
-
-                                        {/* ============================= */}
-                                        {/* BOTON GUARDAR */}
-                                        {/* ============================= */}
-                                        <div className="mt-auto pt-7">
-                                            <button
-                                                type="button"
-                                                onClick={handleGuardarCambios}
-                                                disabled={!puedeGuardar}
-                                                className={`
-                                                    flex w-full items-center justify-center gap-3 rounded-2xl
-                                                    border px-5 py-4 text-sm font-bold transition
-                                                    ${puedeGuardar
-                                                        ? "border-fuchsia-400/60 bg-fuchsia-500 text-black shadow-[0_0_30px_rgba(217,70,239,0.28)] hover:scale-[1.01]"
-                                                        : "cursor-not-allowed border-white/10 bg-white/[0.035] text-white/30"
-                                                    }
-                                                `}
-                                            >
-                                                <Save size={19} />
-                                                {isWorking ? "Guardando..." : "Guardar cambios"}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </section>
-                        </div>
                     ) : (
                         /* ============================= */
                         /* VISTA ADMINISTRADOR TEMPORAL */
                         /* ============================= */
                         <div
                             className="
-                                flex min-h-[430px] flex-col items-center justify-center rounded-3xl
-                                border border-white/10 bg-white/[0.025] p-8 text-center
+                                min-h-0 rounded-3xl border border-white/10
+                                bg-white/[0.025] p-5 text-center lg:p-6
                             "
                         >
-                            <div
-                                className="
-                                    mb-5 flex h-20 w-20 items-center justify-center rounded-full
-                                    border border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300
-                                "
-                            >
-                                <Shield size={38} />
-                            </div>
-
-                            <h3 className="text-xl font-bold text-white">
-                                Panel administrador
-                            </h3>
-
-                            <p className="mt-2 max-w-md text-sm leading-6 text-white/45">
-                                Aquí luego irán los componentes de administración que me pasarás después.
-                            </p>
+                            <GestionGrupoAndMusica />
                         </div>
                     )}
                 </main>

@@ -1,33 +1,69 @@
-# Documentacion tecnica: editar nombre de listas
+# Documentacion tecnica: ModalPlaylist, edicion de listas y panel administrador
 
-Este documento explica el flujo para editar el nombre de una playlist desde el modal `ModalPlaylist`.
-La idea es que puedas entender que archivo hace cada parte, como viajan los datos y como reutilizar esta logica mas adelante.
+Este documento explica como funciona el modal `ModalPlaylist`, como se edita el nombre de una lista, como viaja la informacion entre componentes, y que hace la vista de administrador.
 
-Archivos revisados:
+La version actual ya no renderiza toda la vista de usuario directamente dentro de `ModalPlaylist.jsx`. Ahora el modal actua como contenedor y coordinador, mientras que la pantalla de edicion de listas vive en `EditListas.jsx`.
+
+Archivos principales:
 
 - `frontend/src/components/modals/ModalPlaylist.jsx`
+- `frontend/src/components/modals/contents/favoritos/EditListas.jsx`
+- `frontend/src/components/modals/contents/favoritos/FavoritosList.jsx`
+- `frontend/src/components/modals/contents/favoritos/FavoritosListItem.jsx`
+- `frontend/src/components/modals/contents/gestion/gestionGrupoandMusica.jsx`
+- `frontend/src/components/modals/contents/gestion/RegistrarGrupoForm.jsx`
+- `frontend/src/components/modals/contents/gestion/RegistrarMusicaForm.jsx`
+- `frontend/src/components/modals/contents/gestion/SelectGrupoBox.jsx`
+- `frontend/src/components/modals/contents/gestion/UploadBox.jsx`
 - `frontend/src/pages/Home.jsx`
 - `frontend/src/hooks/useListas.js`
 - `frontend/src/api/listasApi.js`
 
 ---
 
-## Resumen rapido
+## 1. Resumen rapido
 
-El renombrado funciona en 4 capas:
+`ModalPlaylist` tiene dos pestanas:
 
-1. `ModalPlaylist.jsx`: muestra la lista seleccionada, permite escribir el nuevo nombre y dispara el guardado.
-2. `Home.jsx`: recibe el pedido del modal, llama al hook y actualiza el estado principal de `listas`.
-3. `useListas.js`: contiene la funcion reutilizable `actualizarNombreLista`.
-4. `listasApi.js`: envia el `PUT` al backend.
+| Pestana | Componente que renderiza | Responsabilidad |
+|---|---|---|
+| `usuario` | `EditListas` | Seleccionar una playlist y editar su nombre. |
+| `administrador` | `GestionGrupoAndMusica` | Mostrar formularios visuales para registrar grupo y musica. |
 
-Flujo completo:
+Flujo principal para renombrar:
 
 ```txt
-Usuario escribe nuevo nombre en ModalPlaylist
+Usuario abre ModalPlaylist
         |
         v
-Click en "Guardar cambios"
+ModalPlaylist recibe listas desde Home
+        |
+        v
+Usuario selecciona una lista en FavoritosList
+        |
+        v
+FavoritosList llama onSeleccionarLista(listaId)
+        |
+        v
+EditListas llama onSeleccionar(listaId)
+        |
+        v
+ModalPlaylist.handleSeleccionarLista(listaId)
+        |
+        v
+ModalPlaylist guarda listasSeleccionadasIds = [listaId]
+        |
+        v
+ModalPlaylist calcula listaSeleccionada y sincroniza nombreLista
+        |
+        v
+EditListas muestra la lista seleccionada y el input
+        |
+        v
+Usuario cambia el texto y hace click en "Guardar cambios"
+        |
+        v
+EditListas llama onGuardar()
         |
         v
 ModalPlaylist.handleGuardarCambios()
@@ -52,37 +88,27 @@ body: { nuevoNombre }
 Home actualiza setListas(...)
         |
         v
-ModalPlaylist recibe listas actualizadas por props
+ModalPlaylist recibe listas actualizadas
         |
         v
-El nombre cambia en tiempo real en el modal y en el resto de la UI
+EditListas se renderiza con el nuevo nombre
 ```
 
 ---
 
-## 1. Donde nace la accion
+## 2. Responsabilidad de ModalPlaylist
 
-La accion nace en `ModalPlaylist.jsx`.
+`ModalPlaylist.jsx` es el componente coordinador del modal. Sus tareas son:
 
-Importaciones principales:
+1. Mostrar u ocultar el modal segun `isOpen`.
+2. Mantener la pestana activa: `usuario` o `administrador`.
+3. Mantener la lista seleccionada.
+4. Mantener el texto editable del nombre.
+5. Validar si se puede guardar.
+6. Llamar al callback `onRenombrarLista`.
+7. Renderizar la vista correcta segun la pestana activa.
 
-```jsx
-import { useEffect, useMemo, useState } from "react";
-import { X, Music, Shield, User, Save, Edit3, ListMusic } from "lucide-react";
-import FavoritosList from "./contents/favoritos/FavoritosList";
-```
-
-Que aporta cada import:
-
-| Import | Para que sirve |
-|---|---|
-| `useState` | Guarda estados internos del modal: pestana activa, lista seleccionada, texto del input y bloqueo de guardado. |
-| `useMemo` | Calcula la lista seleccionada a partir del id seleccionado y el array `listas`. |
-| `useEffect` | Sincroniza el input con el nombre real de la lista seleccionada. |
-| Iconos de `lucide-react` | Solo UI visual: cerrar, guardar, editar, etc. |
-| `FavoritosList` | Renderiza la columna izquierda con las playlists disponibles. |
-
-El componente recibe estas props:
+Props que recibe:
 
 ```jsx
 export default function ModalPlaylist({
@@ -94,20 +120,27 @@ export default function ModalPlaylist({
 })
 ```
 
-Props importantes para renombrar:
-
-| Prop | Quien la envia | Uso |
+| Prop | Quien la envia | Para que sirve |
 |---|---|---|
-| `isOpen` | `Home.jsx` | Decide si el modal se muestra o retorna `null`. |
-| `listas` | `Home.jsx` | Array actualizado de playlists del usuario. |
-| `onRenombrarLista` | `Home.jsx` | Funcion callback que conecta el modal con la actualizacion real. |
+| `isOpen` | `Home.jsx` | Controla si el modal se monta o retorna `null`. |
 | `onClose` | `Home.jsx` | Cierra el modal. |
+| `listas` | `Home.jsx` / `useBiblioteca` | Fuente de verdad visible para las playlists. |
+| `onRenombrarLista` | `Home.jsx` | Callback que conecta el modal con el backend y con `setListas`. |
+| `onEliminarLista` | `Home.jsx` | Callback para eliminar una lista desde la vista de favoritos. |
+
+Importante:
+
+```txt
+ModalPlaylist no llama directamente a axios.
+ModalPlaylist no conoce listasApi.
+ModalPlaylist solo emite eventos hacia Home por callbacks.
+```
 
 ---
 
-## 2. Estados internos del modal
+## 3. Estados internos de ModalPlaylist
 
-En `ModalPlaylist.jsx`:
+Estados actuales:
 
 ```jsx
 const [tabActiva, setTabActiva] = useState("usuario");
@@ -116,16 +149,14 @@ const [nombreLista, setNombreLista] = useState("");
 const [isWorking, setIsWorking] = useState(false);
 ```
 
-Explicacion:
-
-| Estado | Ejemplo | Para que sirve |
+| Estado | Ejemplo | Uso |
 |---|---|---|
-| `tabActiva` | `"usuario"` | Controla si se ve la pestana Usuario o Administrador. |
-| `listasSeleccionadasIds` | `[3]` | Guarda el id de la lista seleccionada. Aunque es array, aqui se usa solo una lista. |
-| `nombreLista` | `"Rock clasico"` | Guarda lo que el usuario escribe en el input. |
-| `isWorking` | `true` / `false` | Bloquea botones e input mientras se guarda. Evita doble click o cambios simultaneos. |
+| `tabActiva` | `"usuario"` | Decide si se muestra `EditListas` o `GestionGrupoAndMusica`. |
+| `listasSeleccionadasIds` | `[7]` | Guarda la lista seleccionada. Aunque es array, aqui se usa solo el primer id. |
+| `nombreLista` | `"Favoritas 2026"` | Valor controlado del input de renombrado. |
+| `isWorking` | `true` | Bloquea interacciones mientras se guarda. |
 
-La lista seleccionada se obtiene asi:
+La lista seleccionada se calcula asi:
 
 ```jsx
 const listaSeleccionadaId = listasSeleccionadasIds[0] || null;
@@ -137,63 +168,214 @@ const listaSeleccionada = useMemo(() => {
 
 Punto clave:
 
-- El modal no guarda una copia completa de la lista.
-- Solo guarda el id seleccionado.
-- Cada render vuelve a buscar la lista actual dentro de `listas`.
-- Por eso, si `Home` actualiza `listas`, el modal tambien ve el nuevo nombre.
+```txt
+ModalPlaylist guarda el id seleccionado, no una copia completa de la lista.
+La lista real siempre se busca dentro del array listas que viene de Home.
+```
+
+Esto evita desincronizacion: si `Home` actualiza `listas`, el modal vuelve a calcular la lista seleccionada con los datos nuevos.
 
 ---
 
-## 3. Como se selecciona una lista
+## 4. Render por pestanas
 
-La seleccion ocurre desde `FavoritosList`, que recibe:
+Dentro del `main`, el modal decide que vista montar:
+
+```jsx
+{tabActiva === "usuario" ? (
+    <EditListas ... />
+) : (
+    <GestionGrupoAndMusica />
+)}
+```
+
+La zona de contenido usa:
+
+```jsx
+<main className="no-scrollbar relative min-h-0 flex-1 overflow-y-auto p-6 lg:p-7">
+```
+
+Por que es importante:
+
+| Clase | Motivo |
+|---|---|
+| `min-h-0` | Permite que el contenido interno pueda encogerse dentro de un contenedor flex. |
+| `flex-1` | Hace que el cuerpo ocupe el espacio disponible debajo del header y las pestanas. |
+| `overflow-y-auto` | Permite scroll si el alto de la ventana no alcanza. |
+| `no-scrollbar` | Oculta la barra visual, pero conserva el scroll. |
+| `p-6 lg:p-7` | Reduce padding en ventana minima y mantiene aire en pantallas grandes. |
+
+Esto se ajusto porque Electron define:
+
+```js
+width: 1200,
+height: 800,
+minWidth: 1200,
+minHeight: 800,
+```
+
+En `1200x800` el alto disponible del modal es limitado, por eso el contenido debe poder adaptarse sin mostrar una barra blanca visible.
+
+---
+
+## 5. Vista Usuario: EditListas
+
+`EditListas.jsx` es la vista que pinta el flujo de usuario.
+
+Props que recibe desde `ModalPlaylist`:
+
+```jsx
+<EditListas
+    listas={listas}
+    onSeleccionar={handleSeleccionarLista}
+    listaSeleccionadaId={listaSeleccionadaId}
+    onRenombrarLista={onRenombrarLista}
+    onEliminarLista={onEliminarLista}
+    listasSeleccionadasIds={listasSeleccionadasIds}
+    nombreLista={nombreLista}
+    onNombreListaChange={setNombreLista}
+    onGuardar={handleGuardarCambios}
+    isWorking={isWorking}
+    puedeGuardar={puedeGuardar}
+/>
+```
+
+Aunque `EditListas` recibe `onRenombrarLista`, actualmente el guardado real no se dispara desde ahi. El boton usa:
+
+```jsx
+onClick={onGuardar}
+```
+
+Eso significa:
+
+```txt
+EditListas pinta el boton.
+ModalPlaylist conserva la logica de guardado.
+Home conserva la logica de backend y actualizacion global.
+```
+
+---
+
+## 6. Como EditListas calcula y muestra la lista seleccionada
+
+`EditListas` tambien calcula la lista seleccionada para poder pintar la tarjeta derecha:
+
+```jsx
+const listaSeleccionada = useMemo(() => {
+    return listas.find((lista) => lista.id === listaSeleccionadaId) || null;
+}, [listas, listaSeleccionadaId]);
+```
+
+Tambien calcula la cantidad de canciones:
+
+```jsx
+const cantidadCanciones = Array.isArray(listaSeleccionada?.canciones)
+    ? listaSeleccionada.canciones.length
+    : Number(listaSeleccionada?.canciones || 0);
+```
+
+Si no hay lista seleccionada:
+
+```txt
+EditListas muestra un estado vacio:
+"Selecciona una lista"
+```
+
+Si hay lista seleccionada:
+
+```txt
+EditListas muestra:
+- imagen de la lista
+- nombre actual
+- cantidad de canciones
+- input para cambiar el nombre
+- boton Guardar cambios
+```
+
+---
+
+## 7. Como se selecciona una lista
+
+`EditListas` renderiza `FavoritosList`:
 
 ```jsx
 <FavoritosList
     listas={listas}
     listasSeleccionadasIds={listasSeleccionadasIds}
     isWorking={isWorking}
-    onSeleccionarLista={handleSeleccionarLista}
+    onSeleccionarLista={onSeleccionar}
     onEliminarLista={onEliminarLista}
 />
 ```
 
-Cuando el usuario elige una playlist:
+El viaje del click es:
+
+```txt
+Usuario hace click en una lista
+        |
+        v
+FavoritosList / FavoritosListItem detecta el click
+        |
+        v
+onSeleccionarLista(lista.id)
+        |
+        v
+EditListas propaga onSeleccionar(lista.id)
+        |
+        v
+ModalPlaylist.handleSeleccionarLista(listaId)
+        |
+        v
+setListasSeleccionadasIds([listaId])
+```
+
+En `ModalPlaylist`:
 
 ```jsx
 const handleSeleccionarLista = (listaId) => {
     if (isWorking) return;
-
     setListasSeleccionadasIds([listaId]);
 };
 ```
 
-Aqui se fuerza que haya solo una playlist seleccionada:
-
-```txt
-Antes: []
-Click en lista id 5
-Despues: [5]
-```
-
-Luego `listaSeleccionadaId` toma `5` y `useMemo` busca esa lista dentro de `listas`.
+La condicion `if (isWorking) return` evita cambiar de lista mientras hay una operacion de guardado en curso.
 
 ---
 
-## 4. Sincronizacion del input con la lista seleccionada
+## 8. Sincronizacion del input
 
-El input usa el estado `nombreLista`:
+El input vive en `EditListas`, pero su estado vive en `ModalPlaylist`.
+
+En `EditListas`:
 
 ```jsx
 <input
     type="text"
     value={nombreLista}
-    onChange={(e) => setNombreLista(e.target.value)}
+    onChange={(e) => onNombreListaChange?.(e.target.value)}
     disabled={isWorking}
 />
 ```
 
-Cuando cambia la lista seleccionada, se ejecuta:
+El flujo del input es:
+
+```txt
+Usuario escribe
+        |
+        v
+EditListas ejecuta onNombreListaChange(texto)
+        |
+        v
+ModalPlaylist ejecuta setNombreLista(texto)
+        |
+        v
+React renderiza de nuevo
+        |
+        v
+EditListas recibe nombreLista actualizado por props
+```
+
+Cuando cambia la lista seleccionada, `ModalPlaylist` sincroniza el input:
 
 ```jsx
 useEffect(() => {
@@ -205,30 +387,26 @@ useEffect(() => {
 }, [listaSeleccionada]);
 ```
 
-Esto hace dos cosas:
-
-- Si seleccionas una lista, el input se llena con el nombre actual.
-- Si no hay lista seleccionada, el input queda vacio.
-
 Ejemplo:
 
 ```txt
 listas = [
-  { id: 1, nombre: "Gym" },
+  { id: 1, nombre: "Rock" },
   { id: 2, nombre: "Estudio" }
 ]
 
 Usuario selecciona id 2
-listaSeleccionada = { id: 2, nombre: "Estudio" }
+listaSeleccionada.nombre = "Estudio"
 useEffect ejecuta setNombreLista("Estudio")
+EditListas recibe nombreLista = "Estudio"
 input muestra "Estudio"
 ```
 
 ---
 
-## 5. Validacion antes de guardar
+## 9. Validacion antes de guardar
 
-El modal calcula si se puede guardar:
+`ModalPlaylist` calcula:
 
 ```jsx
 const nombreLimpio = nombreLista.trim();
@@ -242,30 +420,32 @@ const puedeGuardar =
 
 Condiciones:
 
-| Condicion | Motivo |
+| Condicion | Significado |
 |---|---|
-| `!!listaSeleccionada` | Debe haber una playlist elegida. |
-| `!!nombreLimpio` | No permite guardar nombres vacios o solo espacios. |
-| `nombreLimpio !== listaSeleccionada.nombre` | No llama al backend si el nombre no cambio. |
-| `!isWorking` | No permite guardar mientras ya hay una peticion en curso. |
+| `!!listaSeleccionada` | Hay una lista elegida. |
+| `!!nombreLimpio` | El nombre no esta vacio ni es solo espacios. |
+| `nombreLimpio !== listaSeleccionada.nombre` | El usuario realmente cambio el nombre. |
+| `!isWorking` | No hay otra operacion de guardado en curso. |
 
-El boton usa esa validacion:
+`EditListas` solo recibe el resultado:
 
 ```jsx
-<button
-    type="button"
-    onClick={handleGuardarCambios}
-    disabled={!puedeGuardar}
->
-    {isWorking ? "Guardando..." : "Guardar cambios"}
-</button>
+disabled={!puedeGuardar}
 ```
+
+Esto mantiene la regla de negocio en `ModalPlaylist`, y deja a `EditListas` como vista controlada por props.
 
 ---
 
-## 6. Guardado desde el modal
+## 10. Guardado del nuevo nombre
 
-En `ModalPlaylist.jsx`:
+Cuando el usuario hace click en `Guardar cambios`, `EditListas` llama:
+
+```jsx
+onGuardar()
+```
+
+Ese `onGuardar` es `handleGuardarCambios` de `ModalPlaylist`:
 
 ```jsx
 const handleGuardarCambios = async () => {
@@ -281,7 +461,7 @@ const handleGuardarCambios = async () => {
         const resultado = await onRenombrarLista?.(listaSeleccionada.id, nuevoNombre);
 
         if (resultado) {
-            // El input se actualiza automaticamente cuando Home cambia listas.
+            // El input se actualiza automaticamente cuando Home actualiza listas.
         }
     } catch (error) {
         console.error("Error al guardar cambios:", error);
@@ -291,32 +471,24 @@ const handleGuardarCambios = async () => {
 };
 ```
 
-Datos que salen del modal:
+Datos que salen de `ModalPlaylist`:
 
 ```txt
 listaSeleccionada.id = 7
 nuevoNombre = "Favoritas 2026"
 ```
 
-El modal llama:
+Llamada:
 
 ```jsx
 onRenombrarLista(7, "Favoritas 2026")
 ```
 
-Importante:
-
-- `ModalPlaylist` no conoce la API.
-- `ModalPlaylist` no llama directamente a `axios`.
-- `ModalPlaylist` solo pide a su padre: "renombra esta lista con este nombre".
-
-Eso permite reutilizar el modal con otra logica si algun dia cambia el backend.
-
 ---
 
-## 7. Conexion desde Home
+## 11. Conexion con Home
 
-En `Home.jsx`, el modal se renderiza asi:
+`Home.jsx` monta el modal asi:
 
 ```jsx
 <ModalPlaylist
@@ -328,12 +500,7 @@ En `Home.jsx`, el modal se renderiza asi:
 />
 ```
 
-`Home` le pasa al modal:
-
-- `listas`: el estado principal visible en la pantalla.
-- `onRenombrarLista`: la funcion que sabe actualizar backend y UI.
-
-La funcion importante:
+La funcion que recibe el renombrado:
 
 ```jsx
 const handleRenombrarListaFavoritos = async (listaId, nuevoNombre) => {
@@ -353,37 +520,16 @@ const handleRenombrarListaFavoritos = async (listaId, nuevoNombre) => {
 };
 ```
 
-Que hace paso a paso:
+Home hace dos cosas:
 
-1. Recibe `listaId` y `nuevoNombre` desde el modal.
-2. Llama a `actualizarNombreLista(listaId, nuevoNombre)`.
-3. Si el hook devuelve algo correcto, actualiza el estado `listas` de `useBiblioteca`.
-4. Retorna `resultado` al modal.
-
-Ejemplo de actualizacion local:
-
-```js
-prev = [
-  { id: 1, nombre: "Gym" },
-  { id: 7, nombre: "Viejo nombre" }
-]
-
-listaId = 7
-nuevoNombre = "Favoritas 2026"
-
-resultado = [
-  { id: 1, nombre: "Gym" },
-  { id: 7, nombre: "Favoritas 2026" }
-]
-```
-
-Esta parte es la que hace que la UI cambie en tiempo real sin recargar.
+1. Ejecuta la accion real mediante `useListas.actualizarNombreLista`.
+2. Actualiza el estado visible `listas` que viene de `useBiblioteca`.
 
 ---
 
-## 8. Por que Home actualiza `setListas` si `useListas` tambien tiene estado
+## 12. Por que Home tambien llama setListas
 
-En `Home.jsx` existen dos fuentes relacionadas:
+En `Home.jsx` se usan dos hooks relacionados:
 
 ```jsx
 const {
@@ -404,37 +550,63 @@ const {
 
 Punto importante:
 
-- Las listas que se pintan en `TopHeader`, `PlaylistPanel`, `ExplorePanel` y `ModalPlaylist` vienen de `useBiblioteca`.
-- `useListas` tiene su propio estado interno `listas`, pero en este flujo Home no usa ese array para pintar.
-- Por eso, despues de llamar a `actualizarNombreLista`, Home tambien llama a `setListas`.
+```txt
+La UI principal pinta listas desde useBiblioteca.
+useListas ejecuta acciones y tambien tiene un estado interno, pero ese estado no es la fuente visible en Home.
+```
 
-Si solo se actualizara el estado interno de `useListas`, el backend cambiaria, pero la pantalla podria seguir mostrando el nombre viejo porque la UI esta leyendo `listas` desde `useBiblioteca`.
+Por eso, despues de llamar al backend, Home actualiza `setListas` de `useBiblioteca`.
 
-Por eso existe este doble movimiento:
+Si no se hiciera:
 
 ```txt
-1. useListas actualiza backend
-2. Home actualiza listas de useBiblioteca para refrescar la UI visible
+Backend: nombre actualizado
+useListas.listas: podria quedar actualizado
+Home.listas: podria seguir con el nombre viejo
+ModalPlaylist: seguiria recibiendo el nombre viejo por props
+```
+
+La actualizacion correcta es inmutable:
+
+```jsx
+setListas((prev) =>
+    prev.map((lista) =>
+        lista.id === listaId
+            ? { ...lista, nombre: nuevoNombre }
+            : lista
+    )
+);
+```
+
+No se debe mutar directamente:
+
+```js
+// Evitar:
+lista.nombre = nuevoNombre;
 ```
 
 ---
 
-## 9. Hook reutilizable: useListas
+## 13. Hook useListas
 
-En `useListas.js` se importan las funciones API:
+`useListas.js` concentra acciones reutilizables sobre listas:
 
 ```jsx
-import {
-    agregarCancionALista,
-    crearListaUsuario,
-    eliminarLista,
-    obtenerListasUsuario,
-    quitarCancionDeLista,
-    renombrarLista,
-} from "../api/listasApi";
+const {
+    listas,
+    setListas,
+    loadingListas,
+    errorListas,
+    cargarListas,
+    crearLista,
+    agregarCancion,
+    quitarCancion,
+    borrarLista,
+    actualizarNombreLista,
+} = useListas();
 ```
 
-La funcion que renombra:
+Funcion de renombrado:
 
 ```jsx
 const actualizarNombreLista = useCallback(async (listaId, nuevoNombre) => {
@@ -463,56 +635,23 @@ const actualizarNombreLista = useCallback(async (listaId, nuevoNombre) => {
 }, []);
 ```
 
-Responsabilidades del hook:
+Responsabilidades:
 
 | Responsabilidad | Como lo hace |
 |---|---|
 | Activar loading | `setLoadingListas(true)` |
-| Limpiar errores anteriores | `setErrorListas(null)` |
-| Llamar al backend | `await renombrarLista(listaId, nuevoNombre)` |
-| Actualizar su estado interno | `setListas(prev => prev.map(...))` |
-| Retornar resultado | `return data` |
-| Manejar error | `catch`, `setErrorListas(...)`, `return null` |
-| Apagar loading | `finally`, `setLoadingListas(false)` |
-
-Este hook es reutilizable en otros componentes porque expone:
-
-```jsx
-return {
-    listas,
-    setListas,
-    loadingListas,
-    errorListas,
-    cargarListas,
-    crearLista,
-    agregarCancion,
-    quitarCancion,
-    borrarLista,
-    actualizarNombreLista,
-};
-```
-
-Para reutilizar el renombrado en otro componente:
-
-```jsx
-const { actualizarNombreLista } = useListas();
-
-await actualizarNombreLista(listaId, nuevoNombre);
-```
-
-Si ese componente pinta listas desde otro estado externo, tambien debe actualizar ese estado externo, igual que hace `Home`.
+| Limpiar error anterior | `setErrorListas(null)` |
+| Llamar API | `renombrarLista(listaId, nuevoNombre)` |
+| Actualizar estado interno | `setListas(prev => prev.map(...))` |
+| Informar exito | `return data` |
+| Informar error | `return null` |
+| Apagar loading | `finally` |
 
 ---
 
-## 10. Capa API: listasApi
+## 14. Capa API
 
-En `listasApi.js` se importa el cliente HTTP:
-
-```jsx
-import axiosClient from "./axiosClient";
-```
-
-La funcion de renombrado:
+`listasApi.js` contiene la funcion HTTP:
 
 ```jsx
 export async function renombrarLista(listaId, nuevoNombre) {
@@ -524,7 +663,7 @@ export async function renombrarLista(listaId, nuevoNombre) {
 }
 ```
 
-Datos enviados:
+Contrato:
 
 ```txt
 Metodo: PUT
@@ -535,106 +674,201 @@ Body:
 }
 ```
 
-Ejemplo real:
+Ejemplo:
 
 ```txt
-listaId = 7
-nuevoNombre = "Favoritas 2026"
-
 PUT /api/listas/7
+
 {
   "nuevoNombre": "Favoritas 2026"
 }
 ```
 
-Respuesta esperada segun comentario del archivo:
-
-```js
-{
-  mensaje: "Lista renombrada correctamente"
-}
-```
-
-La capa API no maneja estados de React. Solo hace la peticion y devuelve `response.data`.
+La capa API no conoce React, no actualiza estados y no renderiza UI.
 
 ---
 
-## 11. Como se actualiza el modal en tiempo real
+## 15. Vista Administrador
 
-El modal se actualiza por este encadenamiento:
-
-```txt
-Home tiene listas
-    |
-    v
-Home pasa listas a ModalPlaylist como prop
-    |
-    v
-ModalPlaylist calcula listaSeleccionada con useMemo
-    |
-    v
-Usuario guarda nuevo nombre
-    |
-    v
-Home ejecuta setListas(...)
-    |
-    v
-React renderiza Home otra vez
-    |
-    v
-ModalPlaylist recibe listas nuevas
-    |
-    v
-useMemo encuentra la misma lista, pero con nombre actualizado
-    |
-    v
-useEffect sincroniza nombreLista con listaSeleccionada.nombre
-    |
-    v
-Input, titulo de card y listas visibles muestran el nuevo nombre
-```
-
-La parte mas importante es esta:
+La pestana `administrador` monta:
 
 ```jsx
-setListas((prev) =>
-    prev.map((lista) =>
-        lista.id === listaId
-            ? { ...lista, nombre: nuevoNombre }
-            : lista
-    )
-);
+<GestionGrupoAndMusica />
 ```
 
-Por que funciona:
+`GestionGrupoAndMusica.jsx` agrupa dos formularios:
 
-- `map` crea un array nuevo.
-- Para la lista editada crea un objeto nuevo con `{ ...lista, nombre: nuevoNombre }`.
-- React detecta cambio de referencia.
-- Home se renderiza otra vez.
-- El modal recibe props nuevas.
-
-No se muta directamente:
-
-```js
-// Evitar este estilo:
-lista.nombre = nuevoNombre;
+```jsx
+<RegistrarGrupoForm />
+<RegistrarMusicaForm />
 ```
 
-Porque mutar el objeto directamente puede no disparar correctamente el render de React.
+Layout actual:
+
+```jsx
+<div className="grid w-full grid-cols-1 gap-6 text-left lg:grid-cols-[0.72fr_1.65fr] ...">
+```
+
+Esto significa:
+
+| Breakpoint | Layout |
+|---|---|
+| Menor a `lg` | Una columna: primero grupo, luego musica. |
+| `lg` o mas | Dos columnas: grupo angosto y musica mas ancho. |
+
+En la ventana minima de Electron (`1200x800`), normalmente entra en modo `lg`, por eso se ven ambas areas lado a lado.
 
 ---
 
-## 12. Flujo de datos completo con nombres de funciones
+## 16. RegistrarGrupoForm
+
+`RegistrarGrupoForm.jsx` actualmente es un formulario visual. No tiene estado propio ni envia datos al backend.
+
+Campos:
+
+| Campo | Tipo | Estado actual |
+|---|---|---|
+| Nombre del grupo | `input text` | No controlado |
+| Link de imagen | `input text` | No controlado |
+| Subida de imagen | `UploadBox` | Solo UI |
+| Boton registrar grupo | `button` | Sin handler de envio |
+
+Estructura:
+
+```jsx
+<section>
+    <input placeholder="Escribe el nombre del grupo..." />
+    <input placeholder="Pega el link de la imagen..." />
+    <UploadBox type="image" />
+    <button>Registrar grupo</button>
+</section>
+```
+
+Cuando se conecte a backend, lo recomendable es:
 
 ```txt
-ModalPlaylist.jsx
-  input.onChange
-    setNombreLista(e.target.value)
+RegistrarGrupoForm
+  estados locales
+  validacion
+  onSubmit
+  llamada a un hook de grupos
+  hook llama a api de grupos
+  Home o contexto actualiza estado visible si aplica
+```
+
+---
+
+## 17. RegistrarMusicaForm
+
+`RegistrarMusicaForm.jsx` tambien es visual por ahora. No guarda estado ni llama API.
+
+Campos:
+
+| Campo | Tipo | Estado actual |
+|---|---|---|
+| Titulo de la cancion | `input text` | No controlado |
+| Letra de la cancion | `textarea` | No controlado |
+| Seleccionar grupo | `SelectGrupoBox` | Valor visual fijo |
+| Link de audio | `input text` | No controlado |
+| Duracion MM:SS | `input text` | No controlado |
+| Subida de musica | `UploadBox` | Solo UI |
+| Boton registrar musica | `button` | Sin handler de envio |
+
+Layout interno:
+
+```jsx
+<div className="grid grid-cols-1 gap-5 md:grid-cols-[1.18fr_0.9fr]">
+```
+
+Esto divide el formulario de musica en dos columnas desde `md`:
+
+| Columna principal | Columna secundaria |
+|---|---|
+| Titulo | Link de audio |
+| Letra | Duracion |
+| Seleccionar grupo | Upload de musica |
+
+Este cambio evita que en la ventana minima todo se apile verticalmente y se corte.
+
+---
+
+## 18. SelectGrupoBox y UploadBox
+
+`SelectGrupoBox.jsx`:
+
+```jsx
+<button className="flex h-[74px] w-full ...">
+```
+
+Responsabilidad actual:
+
+```txt
+Mostrar una opcion visual de grupo.
+Todavia no abre un dropdown real ni guarda seleccion.
+```
+
+`UploadBox.jsx`:
+
+```jsx
+export default function UploadBox({ title, description, extra, type = "image" })
+```
+
+Props:
+
+| Prop | Ejemplo | Uso |
+|---|---|---|
+| `title` | `"Suba la imagen"` | Titulo visible. |
+| `description` | `"Haz clic o arrastra una imagen"` | Texto de ayuda. |
+| `extra` | `"JPG, PNG - Max. 5MB"` | Restricciones visibles. |
+| `type` | `"image"` / `"music"` | Decide si usa icono `Image` o `FileMusic`. |
+
+Actualmente es solo presentacional:
+
+```txt
+No tiene input file.
+No procesa drag and drop.
+No sube archivos.
+```
+
+---
+
+## 19. Flujo completo de datos para renombrar
+
+```txt
+Home.jsx
+  listas viene de useBiblioteca(usuarioId)
+  renderiza ModalPlaylist(listas, onRenombrarLista, onEliminarLista)
 
 ModalPlaylist.jsx
-  button.onClick
-    handleGuardarCambios()
+  recibe listas
+  guarda listasSeleccionadasIds
+  calcula listaSeleccionadaId
+  calcula listaSeleccionada
+  guarda nombreLista
+  calcula puedeGuardar
+  renderiza EditListas
+
+EditListas.jsx
+  recibe listas
+  recibe listaSeleccionadaId
+  calcula listaSeleccionada para pintar UI
+  renderiza FavoritosList
+  renderiza input controlado por nombreLista
+  llama onNombreListaChange cuando el usuario escribe
+  llama onGuardar cuando el usuario guarda
+
+FavoritosList.jsx / FavoritosListItem.jsx
+  muestran listas
+  llaman onSeleccionarLista(listaId)
+  llaman onEliminarLista(listaId) si se elimina
+
+ModalPlaylist.jsx
+  handleSeleccionarLista(listaId)
+    setListasSeleccionadasIds([listaId])
+
+ModalPlaylist.jsx
+  useEffect(listaSeleccionada)
+    setNombreLista(listaSeleccionada.nombre)
 
 ModalPlaylist.jsx
   handleGuardarCambios()
@@ -651,10 +885,10 @@ useListas.js
 
 listasApi.js
   renombrarLista(listaId, nuevoNombre)
-    axiosClient.put(`/api/listas/${listaId}`, { nuevoNombre })
+    PUT /api/listas/:listaId { nuevoNombre }
 
 Backend
-  actualiza la playlist
+  actualiza el nombre
   devuelve response.data
 
 useListas.js
@@ -666,21 +900,33 @@ Home.jsx
 
 ModalPlaylist.jsx
   setIsWorking(false)
+  recibe listas nuevas desde Home
+  useEffect sincroniza nombreLista
 
-React
-  renderiza con listas actualizadas
+EditListas.jsx
+  muestra el nombre nuevo
 ```
 
 ---
 
-## 13. Estados antes, durante y despues
+## 20. Estados antes, durante y despues
 
-Antes de editar:
+Antes de seleccionar:
 
 ```txt
-listas = [{ id: 4, nombre: "Mi lista" }]
+listasSeleccionadasIds = []
+listaSeleccionadaId = null
+listaSeleccionada = null
+nombreLista = ""
+puedeGuardar = false
+```
+
+Despues de seleccionar lista `id = 4`:
+
+```txt
 listasSeleccionadasIds = [4]
-listaSeleccionada.nombre = "Mi lista"
+listaSeleccionadaId = 4
+listaSeleccionada = { id: 4, nombre: "Mi lista" }
 nombreLista = "Mi lista"
 puedeGuardar = false
 ```
@@ -693,19 +939,21 @@ listaSeleccionada.nombre = "Mi lista"
 puedeGuardar = true
 ```
 
-Al hacer click en guardar:
+Durante el guardado:
 
 ```txt
 isWorking = true
-boton = "Guardando..."
 input disabled
+boton muestra "Guardando..."
+handleSeleccionarLista no permite cambiar seleccion
 ```
 
-Cuando responde el backend:
+Cuando el backend responde correctamente:
 
 ```txt
 Home.setListas cambia:
 { id: 4, nombre: "Mi lista" }
+
 por:
 { id: 4, nombre: "Mi lista nueva" }
 ```
@@ -713,107 +961,65 @@ por:
 Despues del render:
 
 ```txt
+ModalPlaylist recibe listas actualizadas
 listaSeleccionada.nombre = "Mi lista nueva"
-nombreLista = "Mi lista nueva"
+useEffect ejecuta setNombreLista("Mi lista nueva")
 puedeGuardar = false
 isWorking = false
 ```
 
 ---
 
-## 14. Como reutilizar esta logica mas adelante
-
-Si quieres renombrar una lista desde otro modal, panel o boton, necesitas tres piezas:
-
-### Pieza 1: capturar el nuevo nombre
-
-```jsx
-const [nuevoNombre, setNuevoNombre] = useState("");
-```
-
-### Pieza 2: llamar a la accion del hook
-
-```jsx
-const { actualizarNombreLista } = useListas();
-
-const guardarNombre = async () => {
-    const nombre = nuevoNombre.trim();
-    if (!nombre) return;
-
-    const resultado = await actualizarNombreLista(listaId, nombre);
-
-    if (resultado) {
-        // actualizar el estado que tu pantalla usa para pintar listas
-    }
-};
-```
-
-### Pieza 3: actualizar el estado visible
-
-Si tu pantalla usa `listas` desde `useBiblioteca`, debes hacer:
-
-```jsx
-setListas((prev) =>
-    prev.map((lista) =>
-        lista.id === listaId
-            ? { ...lista, nombre }
-            : lista
-    )
-);
-```
-
-Regla practica:
-
-```txt
-Actualiza siempre el mismo estado desde donde tu componente esta pintando la informacion.
-```
-
-Si el componente pinta desde `useListas().listas`, basta con el estado interno del hook.
-Si pinta desde `useBiblioteca().listas`, debes actualizar `setListas` de `useBiblioteca`.
-
----
-
-## 15. Separacion de responsabilidades
+## 21. Separacion de responsabilidades
 
 | Archivo | Responsabilidad |
 |---|---|
-| `ModalPlaylist.jsx` | UI, seleccion de lista, input, validaciones visuales y llamada a `onRenombrarLista`. |
-| `Home.jsx` | Orquesta el flujo, conecta modal con hook y mantiene actualizado el estado visible global. |
-| `useListas.js` | Encapsula acciones de listas, loading, errores y llamadas a API. |
-| `listasApi.js` | Hace peticiones HTTP con `axiosClient`. |
-
-Esta separacion ayuda porque:
-
-- El modal no depende del backend.
-- El hook puede reutilizarse en otros lugares.
-- La API queda centralizada.
-- Home decide como refrescar la UI principal.
-
----
-
-## 16. Puntos a cuidar
-
-1. El backend espera `{ nuevoNombre }`, no `{ nombre }`.
-2. `ModalPlaylist` usa solo una lista seleccionada, aunque el estado se llame `listasSeleccionadasIds`.
-3. El boton no guarda si el nombre esta vacio, no cambio o hay una peticion activa.
-4. Para que el cambio se vea inmediatamente, hay que actualizar el estado que alimenta la UI.
-5. No mutar listas directamente; usar `map` y retornar objetos nuevos.
-6. Si en el futuro el backend devuelve la lista actualizada completa, se podria usar esa respuesta en vez de confiar solo en `nuevoNombre`.
+| `ModalPlaylist.jsx` | Contenedor del modal, tabs, estados de seleccion, validacion y guardado. |
+| `EditListas.jsx` | Vista de usuario para editar listas; recibe estado y handlers por props. |
+| `FavoritosList.jsx` | Lista visual de playlists. |
+| `FavoritosListItem.jsx` | Item individual; dispara seleccion/eliminacion. |
+| `GestionGrupoAndMusica.jsx` | Layout de administrador para grupo + musica. |
+| `RegistrarGrupoForm.jsx` | Formulario visual de grupo. |
+| `RegistrarMusicaForm.jsx` | Formulario visual de musica. |
+| `SelectGrupoBox.jsx` | Selector visual de grupo. |
+| `UploadBox.jsx` | Caja visual de subida. |
+| `Home.jsx` | Orquesta callbacks, conecta modal con hooks y actualiza estado visible. |
+| `useListas.js` | Acciones reutilizables, loading, errores y llamadas a API. |
+| `listasApi.js` | Peticiones HTTP con `axiosClient`. |
 
 ---
 
-## 17. Version corta para recordar
+## 22. Puntos a cuidar
+
+1. `ModalPlaylist` no debe llamar directo a `listasApi`; debe usar callbacks.
+2. `EditListas` debe seguir recibiendo `nombreLista`, `puedeGuardar` e `isWorking` por props.
+3. Si `EditListas` se vuelve mas inteligente, evitar duplicar la logica de guardado que ya vive en `ModalPlaylist`.
+4. El backend espera `{ nuevoNombre }`, no `{ nombre }`.
+5. La UI visible usa `listas` de `useBiblioteca`; por eso Home debe llamar `setListas`.
+6. No mutar listas directamente; usar `map` y objetos nuevos.
+7. El scroll del modal se mantiene con `overflow-y-auto`, pero la barra visual se oculta con `no-scrollbar`.
+8. Los formularios de administrador son visuales por ahora; no tienen `onSubmit`, estado controlado ni conexion API.
+9. `UploadBox` aun no sube archivos realmente; solo muestra la UI.
+10. `SelectGrupoBox` aun no abre un dropdown real; muestra un grupo fijo.
+
+---
+
+## 23. Version corta para recordar
 
 ```txt
-ModalPlaylist captura el nombre
-Home recibe listaId + nuevoNombre
-useListas llama a listasApi
+Home pasa listas a ModalPlaylist
+ModalPlaylist guarda seleccion y texto
+ModalPlaylist renderiza EditListas en pestana usuario
+EditListas muestra la UI y devuelve eventos por props
+ModalPlaylist valida y llama onRenombrarLista
+Home llama useListas
+useListas llama listasApi
 listasApi hace PUT al backend
-Home actualiza setListas
+Home actualiza setListas de useBiblioteca
 ModalPlaylist recibe listas nuevas
-useEffect sincroniza el input
+EditListas muestra el nombre actualizado
 ```
 
 En una frase:
 
-`ModalPlaylist` pide el cambio, `Home` lo coordina, `useListas` lo ejecuta, `listasApi` lo envia, y `setListas` hace que la interfaz se actualice en tiempo real.
+`ModalPlaylist` coordina el estado del modal, `EditListas` pinta la edicion, `Home` conecta con la logica real, `useListas` ejecuta la accion, `listasApi` habla con el backend, y `setListas` refresca la informacion visible.
