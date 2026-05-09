@@ -4,7 +4,8 @@
 CREATE TABLE grupos_musicales (
     id INT AUTO_INCREMENT PRIMARY KEY,
     imagen_url VARCHAR(255) NOT NULL,
-    nombre VARCHAR(255) NOT NULL
+    nombre VARCHAR(255) NOT NULL,
+    carpeta_slug VARCHAR(255) NULL UNIQUE
 );
 
 CREATE TABLE musica (

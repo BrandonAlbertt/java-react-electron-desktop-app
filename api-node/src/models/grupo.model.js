@@ -195,6 +195,74 @@ async function eliminarMusicasPorGrupo(grupoId) {
 }
 
 // =============================
+// ELIMINAR GRUPO COMPLETO
+// =============================
+// elimina relaciones, canciones y grupo
+// dentro de una misma transaccion.
+async function eliminarGrupoCompleto(grupoId) {
+
+    const connection = await db.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const [musicas] = await connection.query(`
+            SELECT
+                id
+            FROM musica
+            WHERE grupo_id = ?
+        `, [grupoId]);
+
+        const idsMusicas = musicas.map((musica) => musica.id);
+
+        let relacionesListasEliminadas = 0;
+        let relacionesGenerosEliminadas = 0;
+
+        if (idsMusicas.length) {
+            const [resultListas] = await connection.query(`
+                DELETE FROM lista_musica_m
+                WHERE musica_id IN (?)
+            `, [idsMusicas]);
+
+            relacionesListasEliminadas = resultListas.affectedRows;
+
+            const [resultGeneros] = await connection.query(`
+                DELETE FROM musica_generos_m
+                WHERE musica_id IN (?)
+            `, [idsMusicas]);
+
+            relacionesGenerosEliminadas = resultGeneros.affectedRows;
+        }
+
+        const [resultMusicas] = await connection.query(`
+            DELETE FROM musica
+            WHERE grupo_id = ?
+        `, [grupoId]);
+
+        const [resultGrupo] = await connection.query(`
+            DELETE FROM grupos_musicales
+            WHERE id = ?
+        `, [grupoId]);
+
+        await connection.commit();
+
+        return {
+            grupo_eliminado: resultGrupo.affectedRows,
+            musicas_eliminadas: resultMusicas.affectedRows,
+            relaciones_eliminadas: {
+                listas: relacionesListasEliminadas,
+                generos: relacionesGenerosEliminadas,
+            },
+        };
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
+}
+
+// =============================
 // EXPORTAR FUNCIONES
 // =============================
 // estas funciones seran usadas
@@ -210,4 +278,5 @@ module.exports = {
     eliminarRelacionesListasPorMusicas,
     eliminarRelacionesGenerosPorMusicas,
     eliminarMusicasPorGrupo,
+    eliminarGrupoCompleto,
 };

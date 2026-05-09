@@ -163,24 +163,8 @@ async function eliminarGrupo(req, res) {
             });
         }
 
-        // buscar canciones relacionadas al grupo
-        const musicas = await GrupoModel.listarMusicasPorGrupo(id);
-        const idsMusicas = musicas.map((musica) => musica.id);
-
-        // eliminar relaciones de canciones con playlists
-        const relacionesListasEliminadas =
-            await GrupoModel.eliminarRelacionesListasPorMusicas(idsMusicas);
-
-        // eliminar relaciones de canciones con generos
-        const relacionesGenerosEliminadas =
-            await GrupoModel.eliminarRelacionesGenerosPorMusicas(idsMusicas);
-
-        // eliminar canciones del grupo
-        const musicasEliminadas =
-            await GrupoModel.eliminarMusicasPorGrupo(id);
-
-        // eliminar grupo de la bd
-        await GrupoModel.eliminarGrupo(id);
+        // eliminar relaciones, canciones y grupo en una sola transaccion
+        const resultadoEliminacion = await GrupoModel.eliminarGrupoCompleto(id);
 
         // eliminar carpeta fisica del grupo
         if (grupoExiste.carpeta_slug) {
@@ -201,11 +185,8 @@ async function eliminarGrupo(req, res) {
         res.json({
             mensaje: "Grupo eliminado correctamente",
             grupo_eliminado: grupoExiste,
-            musicas_eliminadas: musicasEliminadas,
-            relaciones_eliminadas: {
-                listas: relacionesListasEliminadas,
-                generos: relacionesGenerosEliminadas,
-            },
+            musicas_eliminadas: resultadoEliminacion.musicas_eliminadas,
+            relaciones_eliminadas: resultadoEliminacion.relaciones_eliminadas,
         });
     } catch (error) {
         console.error(error);
