@@ -1,21 +1,201 @@
-// =============================
-// IMPORTS
-// =============================
-// fs y path se usan para borrar
-// archivos fisicos del servidor.
 const fs = require("fs");
 const path = require("path");
 
 const musicaModel = require("../models/musica.model");
+const { crearSlug } = require("../utils/slug");
 
 // =============================
 // VARIABLES DE ENTORNO
 // =============================
-// PUBLIC_URL sirve para crear la url publica.
-// MEDIA_ROOT sirve para ubicar archivos
-// dentro del contenedor docker.
+// MEDIA_ROOT es /media dentro de docker.
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 const MEDIA_ROOT = process.env.MEDIA_ROOT || "/media";
+
+// =============================
+// HELPERS
+// =============================
+// utilidades pequeñas para datos y archivos.
+function parseGenerosIds(valor) {
+    if (valor === undefined || valor === null || valor === "") {
+        return [];
+    }
+
+    let generos = valor;
+
+    if (typeof valor === "string") {
+        try {
+            generos = JSON.parse(valor);
+        } catch (error) {
+            throw new Error("generos_ids debe ser un array o un JSON valido, ejemplo: [1,2]");
+        }
+    }
+
+    if (!Array.isArray(generos)) {
+        throw new Error("generos_ids debe ser un array");
+    }
+
+    return [...new Set(generos
+        .map((id) => Number(id))
+        .filter((id) => Number.isInteger(id) && id > 0))];
+}
+
+function parseDuracion(valor) {
+    if (valor === undefined || valor === null || valor === "") {
+        return null;
+    }
+
+    const duracion = Number(valor);
+
+    if (!Number.isFinite(duracion) || duracion < 0) {
+        throw new Error("duracion_segundos debe ser un numero mayor o igual a 0");
+    }
+
+    return duracion;
+}
+
+function crearLinkAudio(carpetaSlug, filename) {
+    return `${PUBLIC_URL}/media/musicbh/${carpetaSlug}/canciones/${filename}`;
+}
+
+function obtenerPathDesdeLink(linkAudio) {
+    if (!linkAudio) return null;
+
+    let pathname = linkAudio;
+
+    try {
+        pathname = new URL(linkAudio).pathname;
+    } catch (error) {
+        // permite links guardados como /media/...
+    }
+
+    if (!pathname.startsWith("/media/")) {
+        return null;
+    }
+
+    const rutaRelativa = decodeURIComponent(pathname.replace(/^\/media\/?/, ""));
+    const archivoPath = path.normalize(path.join(MEDIA_ROOT, rutaRelativa));
+    const mediaRootNormalizado = path.normalize(MEDIA_ROOT);
+
+    if (!archivoPath.startsWith(mediaRootNormalizado)) {
+        return null;
+    }
+
+    return archivoPath;
+}
+
+function crearNombreAudio(titulo, extension) {
+    const tituloSlug = crearSlug(titulo);
+
+    if (!tituloSlug) {
+        throw new Error("El titulo no genera un nombre de archivo valido");
+    }
+
+    return `${tituloSlug}${extension || ".mp3"}`;
+}
+
+function guardarAudioSubido(file, titulo, grupo) {
+    if (!grupo.carpeta_slug) {
+        const error = new Error("El grupo no tiene carpeta_slug configurado");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const extension = path.extname(file.originalname).toLowerCase() || ".mp3";
+    const filename = crearNombreAudio(titulo, extension);
+    const cancionesPath = path.join(
+        MEDIA_ROOT,
+        "musicbh",
+        grupo.carpeta_slug,
+        "canciones"
+    );
+    const archivoPath = path.join(cancionesPath, filename);
+
+    fs.mkdirSync(cancionesPath, {
+        recursive: true,
+    });
+
+    if (fs.existsSync(archivoPath)) {
+        const error = new Error("Ya existe un audio con ese titulo en la carpeta del grupo");
+        error.statusCode = 409;
+        throw error;
+    }
+
+    fs.writeFileSync(archivoPath, file.buffer);
+
+    return {
+        filename,
+        archivoPath,
+        link_audio: crearLinkAudio(grupo.carpeta_slug, filename),
+    };
+}
+
+function moverAudioSiCorresponde(musicaActual, datosNuevos, grupoNuevo) {
+    if (!musicaActual.link_audio) {
+        return {
+            link_audio: musicaActual.link_audio,
+            archivo_movido: false,
+            motivo: "La cancion no tiene link_audio",
+        };
+    }
+
+    const origenPath = obtenerPathDesdeLink(musicaActual.link_audio);
+
+    if (!origenPath || !fs.existsSync(origenPath)) {
+        return {
+            link_audio: musicaActual.link_audio,
+            archivo_movido: false,
+            motivo: "El archivo fisico no existe",
+        };
+    }
+
+    const extension = path.extname(origenPath).toLowerCase() || ".mp3";
+    const filenameNuevo = crearNombreAudio(datosNuevos.titulo, extension);
+    const destinoDir = path.join(
+        MEDIA_ROOT,
+        "musicbh",
+        grupoNuevo.carpeta_slug,
+        "canciones"
+    );
+    const destinoPath = path.join(destinoDir, filenameNuevo);
+
+    if (path.normalize(origenPath) === path.normalize(destinoPath)) {
+        return {
+            link_audio: crearLinkAudio(grupoNuevo.carpeta_slug, filenameNuevo),
+            archivo_movido: false,
+            motivo: "El archivo ya estaba en la ruta correcta",
+        };
+    }
+
+    fs.mkdirSync(destinoDir, {
+        recursive: true,
+    });
+
+    if (fs.existsSync(destinoPath)) {
+        return {
+            link_audio: musicaActual.link_audio,
+            archivo_movido: false,
+            motivo: "Ya existe un archivo con el nuevo nombre",
+        };
+    }
+
+    fs.renameSync(origenPath, destinoPath);
+
+    return {
+        link_audio: crearLinkAudio(grupoNuevo.carpeta_slug, filenameNuevo),
+        archivo_movido: true,
+        origenPath,
+        destinoPath,
+    };
+}
+
+function manejarError(res, mensaje, error) {
+    const status = error.statusCode || 500;
+
+    res.status(status).json({
+        mensaje,
+        error: error.message,
+    });
+}
 
 // =============================
 // LISTAR MUSICA
@@ -24,81 +204,76 @@ const MEDIA_ROOT = process.env.MEDIA_ROOT || "/media";
 async function listarMusica(req, res) {
     try {
         const musica = await musicaModel.listarMusica();
-
         res.json(musica);
     } catch (error) {
-        console.error("Error al listar música:", error);
-
-        res.status(500).json({
-            mensaje: "Error al listar música",
-            error: error.message,
-        });
+        console.error("Error al listar musica:", error);
+        manejarError(res, "Error al listar musica", error);
     }
 }
 
 // =============================
-// OBTENER MUSICA POR ID
+// OBTENER MUSICA
 // =============================
 // busca una cancion por id.
 async function obtenerMusicaPorId(req, res) {
     try {
-        const { id } = req.params;
-
-        const musica = await musicaModel.obtenerMusicaPorId(id);
+        const musica = await musicaModel.obtenerMusicaPorId(req.params.id);
 
         if (!musica) {
             return res.status(404).json({
-                mensaje: "Canción no encontrada",
+                mensaje: "Cancion no encontrada",
             });
         }
 
         res.json(musica);
     } catch (error) {
-        console.error("Error al obtener música por id:", error);
-
-        res.status(500).json({
-            mensaje: "Error al obtener música",
-            error: error.message,
-        });
+        console.error("Error al obtener musica:", error);
+        manejarError(res, "Error al obtener musica", error);
     }
 }
 
 // =============================
-// CREAR MUSICA NORMAL
+// CREAR MUSICA
 // =============================
-// crea cancion usando json manual.
+// crea cancion usando JSON.
 async function crearMusica(req, res) {
     try {
-        const nuevaMusica = await musicaModel.crearMusica(req.body);
+        const generos_ids = parseGenerosIds(req.body.generos_ids);
+
+        if (!req.body.titulo || !req.body.grupo_id) {
+            return res.status(400).json({
+                mensaje: "titulo y grupo_id son obligatorios",
+            });
+        }
+
+        const nuevaMusica = await musicaModel.crearMusica({
+            titulo: req.body.titulo,
+            letra: req.body.letra || "",
+            link_audio: req.body.link_audio || null,
+            duracion_segundos: parseDuracion(req.body.duracion_segundos),
+            grupo_id: req.body.grupo_id,
+            generos_ids,
+        });
 
         res.status(201).json({
-            mensaje: "Canción creada correctamente",
+            mensaje: "Cancion creada correctamente",
             musica: nuevaMusica,
         });
     } catch (error) {
-        console.error("Error al crear música:", error);
-
-        res.status(500).json({
-            mensaje: "Error al crear música",
-            error: error.message,
-        });
+        console.error("Error al crear musica:", error);
+        manejarError(res, "Error al crear musica", error);
     }
 }
 
 // =============================
 // CREAR MUSICA CON AUDIO
 // =============================
-// sube mp3/wav/m4a al servidor,
-// genera link_audio y guarda en bd.
+// sube audio y guarda link_audio.
 async function crearMusicaConAudio(req, res) {
+    let audioGuardado = null;
+
     try {
-        const {
-            titulo,
-            letra,
-            duracion_segundos,
-            grupo_id,
-            generos_ids,
-        } = req.body;
+        const { titulo, letra, grupo_id } = req.body;
 
         if (!titulo || !grupo_id || !req.file) {
             return res.status(400).json({
@@ -106,137 +281,173 @@ async function crearMusicaConAudio(req, res) {
             });
         }
 
-        // req.grupo viene desde uploadMusica.middleware.js
-        const grupo = req.grupo;
+        const generos_ids = parseGenerosIds(req.body.generos_ids);
+        const grupo = await musicaModel.obtenerGrupoPorId(grupo_id);
 
-        const link_audio = `${PUBLIC_URL}/media/musicbh/${grupo.carpeta_slug}/canciones/${req.file.filename}`;
+        if (!grupo) {
+            return res.status(404).json({
+                mensaje: "Grupo musical no encontrado",
+            });
+        }
+
+        audioGuardado = guardarAudioSubido(req.file, titulo, grupo);
 
         const nuevaMusica = await musicaModel.crearMusica({
             titulo,
             letra: letra || "",
-            link_audio,
-            duracion_segundos: duracion_segundos || null,
+            link_audio: audioGuardado.link_audio,
+            duracion_segundos: parseDuracion(req.body.duracion_segundos),
             grupo_id,
-            generos_ids: generos_ids ? JSON.parse(generos_ids) : [],
+            generos_ids,
         });
 
         res.status(201).json({
-            mensaje: "Canción subida correctamente",
+            mensaje: "Cancion subida correctamente",
             musica: nuevaMusica,
         });
     } catch (error) {
-        console.error("Error al subir música:", error);
+        if (audioGuardado && audioGuardado.archivoPath) {
+            fs.rmSync(audioGuardado.archivoPath, {
+                force: true,
+            });
+        }
 
-        res.status(500).json({
-            mensaje: "Error al subir música",
-            error: error.message,
-        });
+        console.error("Error al subir musica:", error);
+        manejarError(res, "Error al subir musica", error);
     }
 }
 
 // =============================
 // EDITAR MUSICA
 // =============================
-// actualiza datos de una cancion.
+// actualiza datos, generos y audio si aplica.
 async function editarMusica(req, res) {
+    let movimiento = null;
+
     try {
         const { id } = req.params;
+        const musicaActual = await musicaModel.obtenerMusicaPorId(id);
 
-        const musicaEditada = await musicaModel.editarMusica(
-            id,
-            req.body
-        );
-
-        if (!musicaEditada) {
+        if (!musicaActual) {
             return res.status(404).json({
-                mensaje: "Canción no encontrada",
+                mensaje: "Cancion no encontrada",
             });
         }
 
+        const datosNuevos = {
+            titulo: req.body.titulo || musicaActual.titulo,
+            letra: req.body.letra !== undefined ? req.body.letra : musicaActual.letra,
+            duracion_segundos: req.body.duracion_segundos !== undefined
+                ? parseDuracion(req.body.duracion_segundos)
+                : musicaActual.duracion_segundos,
+            grupo_id: req.body.grupo_id || musicaActual.grupo_id,
+            generos_ids: req.body.generos_ids !== undefined
+                ? parseGenerosIds(req.body.generos_ids)
+                : musicaActual.generos_ids,
+            link_audio: musicaActual.link_audio,
+        };
+
+        const grupoNuevo = await musicaModel.obtenerGrupoPorId(datosNuevos.grupo_id);
+
+        if (!grupoNuevo) {
+            return res.status(404).json({
+                mensaje: "Grupo musical no encontrado",
+            });
+        }
+
+        if (!grupoNuevo.carpeta_slug) {
+            return res.status(400).json({
+                mensaje: "El grupo no tiene carpeta_slug configurado",
+            });
+        }
+
+        const cambioTitulo = datosNuevos.titulo !== musicaActual.titulo;
+        const cambioGrupo = Number(datosNuevos.grupo_id) !== Number(musicaActual.grupo_id);
+
+        if (cambioTitulo || cambioGrupo) {
+            movimiento = moverAudioSiCorresponde(musicaActual, datosNuevos, grupoNuevo);
+            datosNuevos.link_audio = movimiento.link_audio;
+        }
+
+        const musicaEditada = await musicaModel.editarMusica(id, datosNuevos);
+
         res.json({
-            mensaje: "Canción editada correctamente",
+            mensaje: "Cancion editada correctamente",
             musica: musicaEditada,
+            archivo_audio: movimiento
+                ? {
+                    movido: movimiento.archivo_movido,
+                    motivo: movimiento.motivo || null,
+                }
+                : {
+                    movido: false,
+                    motivo: "No cambio titulo ni grupo_id",
+                },
         });
     } catch (error) {
-        console.error("Error al editar música:", error);
+        if (movimiento && movimiento.archivo_movido) {
+            try {
+                fs.renameSync(movimiento.destinoPath, movimiento.origenPath);
+            } catch (rollbackError) {
+                console.error("No se pudo revertir el movimiento de audio:", rollbackError);
+            }
+        }
 
-        res.status(500).json({
-            mensaje: "Error al editar música",
-            error: error.message,
-        });
+        console.error("Error al editar musica:", error);
+        manejarError(res, "Error al editar musica", error);
     }
 }
 
 // =============================
 // ELIMINAR MUSICA
 // =============================
-// elimina cancion de:
-// - playlists
-// - generos
-// - tabla musica
-// - archivo fisico
+// elimina relaciones, registro y archivo.
 async function eliminarMusica(req, res) {
     try {
-        const { id } = req.params;
-
-        // primero buscamos la cancion
-        // para conocer su link_audio
-        const musica = await musicaModel.obtenerMusicaPorId(id);
+        const musica = await musicaModel.obtenerMusicaPorId(req.params.id);
 
         if (!musica) {
             return res.status(404).json({
-                mensaje: "Canción no encontrada",
+                mensaje: "Cancion no encontrada",
             });
         }
 
-        // elimina relaciones y registro en bd
-        const eliminado = await musicaModel.eliminarMusica(id);
+        const eliminado = await musicaModel.eliminarMusica(req.params.id);
 
         if (!eliminado) {
             return res.status(404).json({
-                mensaje: "Canción no encontrada",
+                mensaje: "Cancion no encontrada",
             });
         }
 
-        // borrar archivo fisico si existe link_audio
-        if (musica.link_audio) {
-            const url = new URL(musica.link_audio);
+        const archivoPath = obtenerPathDesdeLink(musica.link_audio);
+        let archivoEliminado = false;
 
-            const rutaRelativa = decodeURIComponent(
-                url.pathname.replace("/media/", "")
-            );
-
-            const archivoPath = path.join(
-                MEDIA_ROOT,
-                rutaRelativa
-            );
-
+        if (archivoPath) {
             fs.rmSync(archivoPath, {
                 force: true,
             });
-
-            console.log("🗑️ Audio eliminado:", archivoPath);
+            archivoEliminado = true;
         }
 
         res.json({
-            mensaje: "Canción eliminada correctamente",
+            mensaje: "Cancion eliminada correctamente",
             musica_eliminada: musica,
+            archivo_audio: {
+                eliminado: archivoEliminado,
+                ruta: archivoPath,
+            },
         });
     } catch (error) {
-        console.error("Error al eliminar música:", error);
-
-        res.status(500).json({
-            mensaje: "Error al eliminar música",
-            error: error.message,
-        });
+        console.error("Error al eliminar musica:", error);
+        manejarError(res, "Error al eliminar musica", error);
     }
 }
 
 // =============================
 // EXPORTAR CONTROLADORES
 // =============================
-// estas funciones se usan
-// en musica.routes.js
+// funciones usadas en musica.routes.js.
 module.exports = {
     listarMusica,
     obtenerMusicaPorId,

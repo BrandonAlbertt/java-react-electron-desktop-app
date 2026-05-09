@@ -44,6 +44,22 @@ const {
     eliminarMusica,
 } = require("../controllers/musica.controller");
 
+// =============================
+// MANEJO DE UPLOAD AUDIO
+// =============================
+// devuelve errores multer en json.
+function subirAudioMusica(req, res, next) {
+    uploadMusica.single("audio")(req, res, (error) => {
+        if (error) {
+            return res.status(400).json({
+                mensaje: "Error al subir audio",
+                error: error.message,
+            });
+        }
+
+        next();
+    });
+}
 
 // =============================
 // LISTAR TODAS LAS CANCIONES
@@ -87,7 +103,7 @@ router.post(
 // /media/musicbh/grupo/canciones/
 router.post(
     "/crear-con-audio",
-    uploadMusica.single("audio"),
+    subirAudioMusica,
     crearMusicaConAudio
 );
 
