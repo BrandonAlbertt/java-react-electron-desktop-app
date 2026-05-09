@@ -168,6 +168,17 @@ const playlistRoutes = require("./routes/playlist.routes");
 app.use("/api", playlistRoutes);
 
 // RUTAS DE GRUPOS MUSICALES
+// app.js monta la base: /api/grupos-musicales
+// grupo.routes.js completa el camino final.
+// Ejemplos para navegador:
+// - GET http://localhost:3000/api/grupos-musicales/listar
+// - GET http://localhost:3000/api/grupos-musicales/obtener/1
+// - POST http://localhost:3000/api/grupos-musicales/crear
+// - POST http://localhost:3000/api/grupos-musicales/crear-con-imagen
+// - PUT http://localhost:3000/api/grupos-musicales/actualizar/1
+// - DELETE http://localhost:3000/api/grupos-musicales/eliminar/1
+// Relación de archivos:
+// app.js -> routes/grupo.routes.js -> controllers/grupo.controller.js -> models/grupo.model.js
 const grupoRoutes = require("./routes/grupo.routes");
 app.use("/api/grupos-musicales", grupoRoutes);
 
@@ -269,11 +280,12 @@ app.listen(PORT, () => {
 |   DELETE http://localhost:3000/api/listas/2
 |
 | GRUPOS MUSICALES
-|   GET    http://localhost:3000/api/grupos-musicales
-|   GET    http://localhost:3000/api/grupos-musicales/1
-|   POST   http://localhost:3000/api/grupos-musicales
-|   PUT    http://localhost:3000/api/grupos-musicales/1
-|   DELETE http://localhost:3000/api/grupos-musicales/1
+|   GET    http://localhost:3000/api/grupos-musicales/listar
+|   GET    http://localhost:3000/api/grupos-musicales/obtener/1
+|   POST   http://localhost:3000/api/grupos-musicales/crear
+|   POST   http://localhost:3000/api/grupos-musicales/crear-con-imagen
+|   PUT    http://localhost:3000/api/grupos-musicales/actualizar/1
+|   DELETE http://localhost:3000/api/grupos-musicales/eliminar/1
 |
 | GENEROS MUSICALES
 |   GET    http://localhost:3000/api/generos-musicales

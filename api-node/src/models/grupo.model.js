@@ -1,10 +1,19 @@
 const db = require("../config/db");
 
-// Model: aquí están las consultas SQL que acceden a la base de datos.
-// Nota para no-programadores: el controller llama a estas funciones.
-// Ejemplo de flujo: controller.crearGrupo() -> model.crearGrupo() -> db.query(SQL)
+// Model:
+// aqui viven todas las consultas SQL relacionadas
+// con grupos musicales y eliminacion relacionada.
+//
+// flujo:
+// controller -> model -> base de datos
 
+// =============================
+// LISTAR TODOS LOS GRUPOS
+// =============================
+// obtiene todos los grupos musicales
+// ordenados por id
 async function listarGrupos() {
+
     const [rows] = await db.query(`
         SELECT
             id,
@@ -15,11 +24,15 @@ async function listarGrupos() {
         ORDER BY id ASC
     `);
 
-    // `rows` es un array con las filas devueltas por la consulta.
     return rows;
 }
 
+// =============================
+// OBTENER GRUPO POR ID
+// =============================
+// devuelve un solo grupo
 async function obtenerGrupoPorId(id) {
+
     const [rows] = await db.query(`
         SELECT
             id,
@@ -30,11 +43,19 @@ async function obtenerGrupoPorId(id) {
         WHERE id = ?
     `, [id]);
 
-    // Retornamos la primera fila (o undefined si no existe)
     return rows[0];
 }
 
-async function crearGrupo(imagen_url, nombre, carpeta_slug) {
+// =============================
+// CREAR GRUPO
+// =============================
+// inserta un nuevo grupo musical
+async function crearGrupo(
+    imagen_url,
+    nombre,
+    carpeta_slug
+) {
+
     const [result] = await db.query(`
         INSERT INTO grupos_musicales (
             imagen_url,
@@ -42,9 +63,12 @@ async function crearGrupo(imagen_url, nombre, carpeta_slug) {
             carpeta_slug
         )
         VALUES (?, ?, ?)
-    `, [imagen_url, nombre, carpeta_slug]);
+    `, [
+        imagen_url,
+        nombre,
+        carpeta_slug,
+    ]);
 
-    // `result.insertId` es el id creado por la base de datos.
     return {
         id: result.insertId,
         imagen_url,
@@ -53,7 +77,17 @@ async function crearGrupo(imagen_url, nombre, carpeta_slug) {
     };
 }
 
-async function actualizarGrupo(id, imagen_url, nombre, carpeta_slug) {
+// =============================
+// ACTUALIZAR GRUPO
+// =============================
+// actualiza informacion de grupo
+async function actualizarGrupo(
+    id,
+    imagen_url,
+    nombre,
+    carpeta_slug
+) {
+
     await db.query(`
         UPDATE grupos_musicales
         SET
@@ -61,9 +95,13 @@ async function actualizarGrupo(id, imagen_url, nombre, carpeta_slug) {
             nombre = ?,
             carpeta_slug = ?
         WHERE id = ?
-    `, [imagen_url, nombre, carpeta_slug, id]);
+    `, [
+        imagen_url,
+        nombre,
+        carpeta_slug,
+        id,
+    ]);
 
-    // Devolvemos el objeto con los nuevos valores (útil para el controller)
     return {
         id,
         imagen_url,
@@ -72,20 +110,104 @@ async function actualizarGrupo(id, imagen_url, nombre, carpeta_slug) {
     };
 }
 
+// =============================
+// ELIMINAR GRUPO
+// =============================
+// elimina un grupo por id
 async function eliminarGrupo(id) {
+
     const [result] = await db.query(`
         DELETE FROM grupos_musicales
         WHERE id = ?
     `, [id]);
 
-    // `result.affectedRows` indica cuántas filas fueron borradas (0 o 1).
     return result.affectedRows;
 }
 
+// =============================
+// LISTAR MUSICAS POR GRUPO
+// =============================
+// obtiene ids de canciones
+// pertenecientes a un grupo
+async function listarMusicasPorGrupo(grupoId) {
+
+    const [rows] = await db.query(`
+        SELECT
+            id
+        FROM musica
+        WHERE grupo_id = ?
+    `, [grupoId]);
+
+    return rows;
+}
+
+// =============================
+// ELIMINAR RELACIONES LISTAS
+// =============================
+// elimina canciones de playlists
+async function eliminarRelacionesListasPorMusicas(idsMusicas) {
+
+    // evitar error si no hay ids
+    if (!idsMusicas.length) {
+        return 0;
+    }
+
+    const [result] = await db.query(`
+        DELETE FROM lista_musica_m
+        WHERE musica_id IN (?)
+    `, [idsMusicas]);
+
+    return result.affectedRows;
+}
+
+// =============================
+// ELIMINAR RELACIONES GENEROS
+// =============================
+// elimina relaciones entre
+// canciones y generos
+async function eliminarRelacionesGenerosPorMusicas(idsMusicas) {
+
+    if (!idsMusicas.length) {
+        return 0;
+    }
+
+    const [result] = await db.query(`
+        DELETE FROM musica_generos_m
+        WHERE musica_id IN (?)
+    `, [idsMusicas]);
+
+    return result.affectedRows;
+}
+
+// =============================
+// ELIMINAR MUSICAS DEL GRUPO
+// =============================
+// elimina canciones relacionadas
+// a un grupo musical
+async function eliminarMusicasPorGrupo(grupoId) {
+
+    const [result] = await db.query(`
+        DELETE FROM musica
+        WHERE grupo_id = ?
+    `, [grupoId]);
+
+    return result.affectedRows;
+}
+
+// =============================
+// EXPORTAR FUNCIONES
+// =============================
+// estas funciones seran usadas
+// por grupo.controller.js
 module.exports = {
     listarGrupos,
     obtenerGrupoPorId,
     crearGrupo,
     actualizarGrupo,
     eliminarGrupo,
+
+    listarMusicasPorGrupo,
+    eliminarRelacionesListasPorMusicas,
+    eliminarRelacionesGenerosPorMusicas,
+    eliminarMusicasPorGrupo,
 };

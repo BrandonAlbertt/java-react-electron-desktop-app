@@ -1,16 +1,15 @@
+const fs = require("fs");
+const path = require("path");
+
 const GrupoModel = require("../models/grupo.model");
+
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
+const MEDIA_ROOT = process.env.MEDIA_ROOT || "/media";
 
-
-// Controller: aquí va la lógica que recibe las peticiones HTTP.
-// Relación simple para principiantes:
-// 1) El navegador o Postman llama a una URL (ej. /api/grupos-musicales)
-// 2) Esa URL está definida en `grupo.routes.js` y apunta a una función
-//    de este archivo (controller).
-// 3) El controller usa `GrupoModel` para leer/escribir en la base de datos.
-// 4) El model usa `db` para ejecutar SQL.
-
-// Lista todos los grupos. (GET /api/grupos-musicales)
+// =============================
+// LISTAR GRUPOS
+// =============================
+// devuelve todos los grupos musicales
 async function listarGrupos(req, res) {
     try {
         const grupos = await GrupoModel.listarGrupos();
@@ -18,13 +17,15 @@ async function listarGrupos(req, res) {
     } catch (error) {
         res.status(500).json({
             mensaje: "Error al listar grupos musicales",
-            error,
+            error: error.message,
         });
     }
 }
 
-// Obtiene un grupo por id. (GET /api/grupos-musicales/:id)
-// - `:id` viene en `req.params` y es parte de la URL.
+// =============================
+// OBTENER GRUPO POR ID
+// =============================
+// busca un grupo usando el id de la url
 async function obtenerGrupoPorId(req, res) {
     try {
         const { id } = req.params;
@@ -41,19 +42,15 @@ async function obtenerGrupoPorId(req, res) {
     } catch (error) {
         res.status(500).json({
             mensaje: "Error al obtener grupo musical",
-            error,
+            error: error.message,
         });
     }
 }
 
-// Crea un grupo. (POST /api/grupos-musicales)
-// - En Postman: seleccionar POST, URL `http://localhost:3000/api/grupos-musicales`
-// - En la pestaña Body seleccionar `raw` y `JSON` y pegar:
-//   {
-//     "imagen_url": "https://example.com/imagen.jpg",
-//     "nombre": "Nombre del grupo"
-//   }
-// - Asegurarse de enviar el header `Content-Type: application/json`.
+// =============================
+// CREAR GRUPO NORMAL
+// =============================
+// crea grupo usando datos json manuales
 async function crearGrupo(req, res) {
     try {
         const { imagen_url, nombre, carpeta_slug } = req.body;
@@ -74,69 +71,15 @@ async function crearGrupo(req, res) {
     } catch (error) {
         res.status(500).json({
             mensaje: "Error al crear grupo musical",
-            error,
+            error: error.message,
         });
     }
 }
 
-// Actualiza un grupo. (PUT /api/grupos-musicales/:id)
-// - En Postman: usar PUT y cuerpo JSON igual que en crear.
-async function actualizarGrupo(req, res) {
-    try {
-        const { id } = req.params;
-        const { imagen_url, nombre } = req.body;
-
-        const grupoExiste = await GrupoModel.obtenerGrupoPorId(id);
-
-        if (!grupoExiste) {
-            return res.status(404).json({
-                mensaje: "Grupo musical no encontrado",
-            });
-        }
-
-        const grupoActualizado = await GrupoModel.actualizarGrupo(
-            id,
-            imagen_url,
-            nombre
-        );
-
-        res.json(grupoActualizado);
-    } catch (error) {
-        res.status(500).json({
-            mensaje: "Error al actualizar grupo musical",
-            error,
-        });
-    }
-}
-
-// Elimina un grupo. (DELETE /api/grupos-musicales/:id)
-async function eliminarGrupo(req, res) {
-    try {
-        const { id } = req.params;
-
-        const grupoExiste = await GrupoModel.obtenerGrupoPorId(id);
-
-        if (!grupoExiste) {
-            return res.status(404).json({
-                mensaje: "Grupo musical no encontrado",
-            });
-        }
-
-        await GrupoModel.eliminarGrupo(id);
-
-        res.json({
-            mensaje: "Grupo musical eliminado correctamente",
-        });
-    } catch (error) {
-        res.status(500).json({
-            mensaje: "Error al eliminar grupo musical",
-            error,
-        });
-    }
-}
-
-
-
+// =============================
+// CREAR GRUPO CON IMAGEN
+// =============================
+// crea carpeta, sube imagen y guarda url en bd
 async function crearGrupoConImagen(req, res) {
     try {
         const nombre = req.body.nombre;
@@ -170,11 +113,119 @@ async function crearGrupoConImagen(req, res) {
     }
 }
 
+// =============================
+// ACTUALIZAR GRUPO
+// =============================
+// actualiza datos del grupo
+async function actualizarGrupo(req, res) {
+    try {
+        const { id } = req.params;
+        const { imagen_url, nombre, carpeta_slug } = req.body;
+
+        const grupoExiste = await GrupoModel.obtenerGrupoPorId(id);
+
+        if (!grupoExiste) {
+            return res.status(404).json({
+                mensaje: "Grupo musical no encontrado",
+            });
+        }
+
+        const grupoActualizado = await GrupoModel.actualizarGrupo(
+            id,
+            imagen_url || grupoExiste.imagen_url,
+            nombre || grupoExiste.nombre,
+            carpeta_slug || grupoExiste.carpeta_slug
+        );
+
+        res.json(grupoActualizado);
+    } catch (error) {
+        res.status(500).json({
+            mensaje: "Error al actualizar grupo musical",
+            error: error.message,
+        });
+    }
+}
+
+// =============================
+// ELIMINAR GRUPO COMPLETO
+// =============================
+// elimina grupo, canciones, relaciones y carpeta fisica
+async function eliminarGrupo(req, res) {
+    try {
+        const { id } = req.params;
+
+        // buscar grupo antes de borrar
+        const grupoExiste = await GrupoModel.obtenerGrupoPorId(id);
+
+        if (!grupoExiste) {
+            return res.status(404).json({
+                mensaje: "Grupo musical no encontrado",
+            });
+        }
+
+        // buscar canciones relacionadas al grupo
+        const musicas = await GrupoModel.listarMusicasPorGrupo(id);
+        const idsMusicas = musicas.map((musica) => musica.id);
+
+        // eliminar relaciones de canciones con playlists
+        const relacionesListasEliminadas =
+            await GrupoModel.eliminarRelacionesListasPorMusicas(idsMusicas);
+
+        // eliminar relaciones de canciones con generos
+        const relacionesGenerosEliminadas =
+            await GrupoModel.eliminarRelacionesGenerosPorMusicas(idsMusicas);
+
+        // eliminar canciones del grupo
+        const musicasEliminadas =
+            await GrupoModel.eliminarMusicasPorGrupo(id);
+
+        // eliminar grupo de la bd
+        await GrupoModel.eliminarGrupo(id);
+
+        // eliminar carpeta fisica del grupo
+        if (grupoExiste.carpeta_slug) {
+            const carpetaGrupo = path.join(
+                MEDIA_ROOT,
+                "musicbh",
+                grupoExiste.carpeta_slug
+            );
+
+            fs.rmSync(carpetaGrupo, {
+                recursive: true,
+                force: true,
+            });
+
+            console.log("🗑️ Carpeta eliminada:", carpetaGrupo);
+        }
+
+        res.json({
+            mensaje: "Grupo eliminado correctamente",
+            grupo_eliminado: grupoExiste,
+            musicas_eliminadas: musicasEliminadas,
+            relaciones_eliminadas: {
+                listas: relacionesListasEliminadas,
+                generos: relacionesGenerosEliminadas,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            mensaje: "Error al eliminar grupo musical",
+            error: error.message,
+        });
+    }
+}
+
+// =============================
+// EXPORTAR CONTROLADORES
+// =============================
+// estas funciones se usan en grupo.routes.js
 module.exports = {
     listarGrupos,
     obtenerGrupoPorId,
     crearGrupo,
+    crearGrupoConImagen,
     actualizarGrupo,
     eliminarGrupo,
-    crearGrupoConImagen,
 };
