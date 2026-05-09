@@ -48,6 +48,8 @@ export default function Home({ usuario, onLogout }) {
         error: errorExplorar,
     } = useExplorar();
 
+    //console.log("Home - explorarData.grupos:", explorarData?.grupos);
+
     // ===============================
     // ESTADOS Y REFERENCIAS
     // ===============================
@@ -334,7 +336,9 @@ export default function Home({ usuario, onLogout }) {
     const handleToggleRepeat = () => {
         setRepeatActivo((prev) => !prev);
     };
+ 
 
+    //console.log("listas de grupos en Home:", explorarData?.grupos);
     // ===============================
     // RENDER PRINCIPAL
     // ===============================
@@ -441,6 +445,7 @@ export default function Home({ usuario, onLogout }) {
                 listas={listas}
                 onRenombrarLista={handleRenombrarListaFavoritos}
                 onEliminarLista={handleEliminarListaFavoritos}
+                grupos={explorarData?.grupos || []}
             />
         </section>
     );

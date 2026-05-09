@@ -20,7 +20,10 @@ export default function ModalPlaylist({
     listas = [],
     onRenombrarLista,
     onEliminarLista,
+    grupos = [],
 }) {
+  
+    console.log("ModalPlaylist recibió grupos:", grupos);
     // =============================
     // ESTADOS DEL MODAL
     // =============================
@@ -227,7 +230,8 @@ export default function ModalPlaylist({
                                 bg-white/[0.025] p-5 text-center lg:p-6
                             "
                         >
-                            <GestionGrupoAndMusica />
+                            // ModalPlaylist.jsx
+                            <GestionGrupoAndMusica grupos={grupos} />
                         </div>
                     )}
                 </main>
