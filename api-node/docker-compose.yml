@@ -22,8 +22,10 @@ services:
     # Conecta una carpeta de tu equipo con /media dentro del contenedor.
     # Sirve para mostrar imágenes o archivos sin copiarlos dentro de la app.
     # :ro significa que solo se pueden leer, no modificar.
+    #- /home/brandon/media:/media:ro
     volumes:
-      - /home/brandon/media:/media:ro
+      - /home/brandon/media:/media
+     
 
     # Conecta este servicio a la red compartida del backend.
     # Eso permite que la API hable con otros contenedores si existen.

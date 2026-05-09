@@ -1,4 +1,6 @@
 const GrupoModel = require("../models/grupo.model");
+const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
+
 
 // Controller: aquí va la lógica que recibe las peticiones HTTP.
 // Relación simple para principiantes:
@@ -54,15 +56,19 @@ async function obtenerGrupoPorId(req, res) {
 // - Asegurarse de enviar el header `Content-Type: application/json`.
 async function crearGrupo(req, res) {
     try {
-        const { imagen_url, nombre } = req.body;
+        const { imagen_url, nombre, carpeta_slug } = req.body;
 
         if (!imagen_url || !nombre) {
             return res.status(400).json({
-                mensaje: "Todos los campos son obligatorios",
+                mensaje: "imagen_url y nombre son obligatorios",
             });
         }
 
-        const nuevoGrupo = await GrupoModel.crearGrupo(imagen_url, nombre);
+        const nuevoGrupo = await GrupoModel.crearGrupo(
+            imagen_url,
+            nombre,
+            carpeta_slug || null
+        );
 
         res.status(201).json(nuevoGrupo);
     } catch (error) {
@@ -129,10 +135,46 @@ async function eliminarGrupo(req, res) {
     }
 }
 
+
+
+async function crearGrupoConImagen(req, res) {
+    try {
+        const nombre = req.body.nombre;
+        const carpetaSlug = req.carpetaSlug;
+
+        if (!nombre || !req.file) {
+            return res.status(400).json({
+                mensaje: "El nombre y la imagen son obligatorios",
+            });
+        }
+
+        const imagenUrl = `${PUBLIC_URL}/media/musicbh/${carpetaSlug}/${req.file.filename}`;
+
+        const nuevoGrupo = await GrupoModel.crearGrupo(
+            imagenUrl,
+            nombre,
+            carpetaSlug
+        );
+
+        res.status(201).json({
+            mensaje: "Grupo creado correctamente",
+            grupo: nuevoGrupo,
+        });
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            mensaje: "Error al crear grupo con imagen",
+            error: error.message,
+        });
+    }
+}
+
 module.exports = {
     listarGrupos,
     obtenerGrupoPorId,
     crearGrupo,
     actualizarGrupo,
     eliminarGrupo,
+    crearGrupoConImagen,
 };

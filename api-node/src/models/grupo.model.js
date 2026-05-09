@@ -9,7 +9,8 @@ async function listarGrupos() {
         SELECT
             id,
             imagen_url,
-            nombre
+            nombre,
+            carpeta_slug
         FROM grupos_musicales
         ORDER BY id ASC
     `);
@@ -23,7 +24,8 @@ async function obtenerGrupoPorId(id) {
         SELECT
             id,
             imagen_url,
-            nombre
+            nombre,
+            carpeta_slug
         FROM grupos_musicales
         WHERE id = ?
     `, [id]);
@@ -32,37 +34,41 @@ async function obtenerGrupoPorId(id) {
     return rows[0];
 }
 
-async function crearGrupo(imagen_url, nombre) {
+async function crearGrupo(imagen_url, nombre, carpeta_slug) {
     const [result] = await db.query(`
         INSERT INTO grupos_musicales (
             imagen_url,
-            nombre
+            nombre,
+            carpeta_slug
         )
-        VALUES (?, ?)
-    `, [imagen_url, nombre]);
+        VALUES (?, ?, ?)
+    `, [imagen_url, nombre, carpeta_slug]);
 
     // `result.insertId` es el id creado por la base de datos.
     return {
         id: result.insertId,
         imagen_url,
         nombre,
+        carpeta_slug,
     };
 }
 
-async function actualizarGrupo(id, imagen_url, nombre) {
+async function actualizarGrupo(id, imagen_url, nombre, carpeta_slug) {
     await db.query(`
         UPDATE grupos_musicales
         SET
             imagen_url = ?,
-            nombre = ?
+            nombre = ?,
+            carpeta_slug = ?
         WHERE id = ?
-    `, [imagen_url, nombre, id]);
+    `, [imagen_url, nombre, carpeta_slug, id]);
 
     // Devolvemos el objeto con los nuevos valores (útil para el controller)
     return {
         id,
         imagen_url,
         nombre,
+        carpeta_slug,
     };
 }
 

@@ -65,9 +65,12 @@ app.use(express.json());
 | http://localhost:3000/media/musica/cancion1.mp3
 */
 
-const mediaPath = path.join(__dirname, "../../media");
+
+const mediaPath = process.env.MEDIA_ROOT || "/media";
 
 app.use("/media", express.static(mediaPath));
+
+console.log("📁 Media servido desde:", mediaPath);
 
 
 
