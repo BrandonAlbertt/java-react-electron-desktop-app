@@ -265,11 +265,19 @@ app.listen(PORT, () => {
 |   GET    http://localhost:3000/api/usuarios/1/biblioteca -> Biblioteca (PROTEGIDO)
 |
 | MUSICA (canciones)
-|   GET    http://localhost:3000/api/musica
-|   GET    http://localhost:3000/api/musica/1
-|   POST   http://localhost:3000/api/musica
-|   PUT    http://localhost:3000/api/musica/1
-|   DELETE http://localhost:3000/api/musica/1
+|   GET    http://localhost:3000/api/musica/listar             -> Listar todas las canciones
+|   GET    http://localhost:3000/api/musica/obtener/:id        -> Obtener canción por ID
+|   POST   http://localhost:3000/api/musica/crear              -> Crear canción (envío JSON)
+|   POST   http://localhost:3000/api/musica/crear-con-audio    -> Crear canción con archivo de audio (form-data, campo `audio`)
+|   PUT    http://localhost:3000/api/musica/actualizar/:id    -> Actualizar canción por ID
+|   DELETE http://localhost:3000/api/musica/eliminar/:id      -> Eliminar canción por ID (borra registro y archivo mp3)
+|   
+|   RUTAS ANTIGUAS / ALIAS (compatibilidad):
+|   GET    http://localhost:3000/api/musica                  -> alias a /listar
+|   GET    http://localhost:3000/api/musica/:id              -> alias a /obtener/:id
+|   POST   http://localhost:3000/api/musica                  -> alias a /crear
+|   PUT    http://localhost:3000/api/musica/:id              -> alias a /actualizar/:id
+|   DELETE http://localhost:3000/api/musica/:id              -> alias a /eliminar/:id
 |
 | PLAYLIST (listas de reproducción)
 |   PUT    http://localhost:3000/api/listas/1

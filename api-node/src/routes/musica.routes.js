@@ -1,25 +1,31 @@
 // =============================
-// RUTAS DE MUSICA
+// RUTAS DE MÚSICA
 // =============================
-// flujo:
-//
+// Flujo:
 // app.js
 // -> musica.routes.js
 // -> musica.controller.js
 // -> musica.model.js
 // -> base de datos
 //
-// prefijo principal:
-// /api/musica
+// Prefijo principal: /api/musica
 //
-// ejemplos:
+// Endpoints (canónicos):
+//   GET    /api/musica/listar              -> Listar todas las canciones
+//   GET    /api/musica/obtener/:id         -> Obtener canción por ID
+//   POST   /api/musica/crear               -> Crear canción (JSON)
+//   POST   /api/musica/crear-con-audio     -> Crear canción con archivo audio (form-data: field `audio`)
+//   PUT    /api/musica/actualizar/:id     -> Actualizar canción por ID
+//   DELETE /api/musica/eliminar/:id       -> Eliminar canción por ID (borra registro y archivo mp3)
 //
-// GET    /api/musica/listar
-// GET    /api/musica/obtener/1
-// POST   /api/musica/crear
-// POST   /api/musica/crear-con-audio
-// PUT    /api/musica/actualizar/1
-// DELETE /api/musica/eliminar/1
+// Rutas antiguas / alias (compatibilidad):
+//   GET    /api/musica                      -> alias a /listar
+//   GET    /api/musica/:id                   -> alias a /obtener/:id
+//   POST   /api/musica                       -> alias a /crear
+//   PUT    /api/musica/:id                   -> alias a /actualizar/:id
+//   DELETE /api/musica/:id                   -> alias a /eliminar/:id
+//
+// Mantener ambos conjuntos facilita compatibilidad con frontend antiguo.
 // =============================
 
 const express = require("express");
