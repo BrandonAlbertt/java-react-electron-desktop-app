@@ -14,6 +14,7 @@ import ModalPlaylist from "../components/modals/ModalPlaylist";
 import { useBiblioteca } from "../hooks/useBiblioteca";
 import { useExplorar } from "../hooks/useExplorar";
 import { useListas } from "../hooks/useListas";
+import { useMusica } from "../hooks/useMusica";
 
 // ===============================
 // COMPONENTE PRINCIPAL
@@ -47,6 +48,9 @@ export default function Home({ usuario, onLogout }) {
         loading: loadingExplorar,
         error: errorExplorar,
     } = useExplorar();
+
+    // expone acciones para musica sin cambiar el flujo actual
+    const { guardarMusica } = useMusica();
 
     //console.log("Home - explorarData.grupos:", explorarData?.grupos);
 
@@ -336,6 +340,7 @@ export default function Home({ usuario, onLogout }) {
     const handleToggleRepeat = () => {
         setRepeatActivo((prev) => !prev);
     };
+
  
 
     //console.log("listas de grupos en Home:", explorarData?.grupos);
@@ -343,7 +348,7 @@ export default function Home({ usuario, onLogout }) {
     // RENDER PRINCIPAL
     // ===============================
     return (
-        <section className="relative h-full w-full bg-gradient-to-b from-[#0d0d12] via-[#09090d] to-[#050507]">
+        <section className="relative h-full w-full bg-linear-to-b from-[#0d0d12] via-[#09090d] to-[#050507]">
             <div className="flex h-full w-full flex-col">
                 <TopHeader
                     listas={listas}
@@ -403,7 +408,7 @@ export default function Home({ usuario, onLogout }) {
                     </div>
                 </div>
 
-                <footer className="h-[120px] w-full shrink-0 border-t border-white/10 px-3 py-3 md:h-[130px] md:px-4">
+                <footer className="h-30 w-full shrink-0 border-t border-white/10 px-3 py-3 md:h-32.5 md:px-4">
                     <PlayerBar
                         cancion={cancionActiva}
                         isPlaying={isPlaying}
@@ -446,6 +451,8 @@ export default function Home({ usuario, onLogout }) {
                 onRenombrarLista={handleRenombrarListaFavoritos}
                 onEliminarLista={handleEliminarListaFavoritos}
                 grupos={explorarData?.grupos || []}
+                generos={explorarData?.generos || []}
+                onGuardarMusica={guardarMusica}
             />
         </section>
     );

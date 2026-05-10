@@ -1,47 +1,54 @@
-const path = require("path");
 const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
 
-// =============================
-// CONFIGURACION AUDIO
-// =============================
-// multer lee el archivo y el controller lo guarda.
-const AUDIO_MIME_TYPES = new Set([
-    "audio/mpeg",
-    "audio/mp3",
-    "audio/wav",
-    "audio/x-wav",
-    "audio/mp4",
-    "audio/m4a",
-    "audio/aac",
-    "audio/ogg",
-    "audio/webm",
-]);
+const GrupoModel = require("../models/grupo.model");
+const { crearSlug } = require("../utils/slug");
 
-const AUDIO_EXTENSIONS = new Set([
-    ".mp3",
-    ".wav",
-    ".m4a",
-    ".aac",
-    ".ogg",
-    ".webm",
-]);
+const MEDIA_ROOT = process.env.MEDIA_ROOT || "/media";
 
-// =============================
-// EXPORTAR MIDDLEWARE
-// =============================
-// memoryStorage evita depender del orden del form-data.
-module.exports = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 30 * 1024 * 1024,
-    },
-    fileFilter: (req, file, cb) => {
-        const extension = path.extname(file.originalname).toLowerCase();
+const storage = multer.diskStorage({
+    destination: async (req, file, cb) => {
+        try {
+            const grupoId = req.body.grupo_id;
 
-        if (!AUDIO_MIME_TYPES.has(file.mimetype) && !AUDIO_EXTENSIONS.has(extension)) {
-            return cb(new Error("Solo se permiten audios MP3, WAV, M4A, AAC, OGG o WEBM"));
+            const grupo = await GrupoModel.obtenerGrupoPorId(grupoId);
+
+            if (!grupo) {
+                return cb(new Error("Grupo no encontrado"));
+            }
+
+            if (!grupo.carpeta_slug) {
+                return cb(new Error("El grupo no tiene carpeta_slug"));
+            }
+
+            const folderPath = path.join(
+                MEDIA_ROOT,
+                "musicbh",
+                grupo.carpeta_slug,
+                "canciones"
+            );
+
+            fs.mkdirSync(folderPath, {
+                recursive: true,
+            });
+
+            req.grupo = grupo;
+
+            cb(null, folderPath);
+        } catch (error) {
+            cb(error);
         }
-
-        cb(null, true);
     },
+
+    filename: (req, file, cb) => {
+        const extension = path.extname(file.originalname);
+        const tituloSlug = crearSlug(req.body.titulo || "cancion");
+
+        cb(null, `${tituloSlug}${extension}`);
+    },
+});
+
+module.exports = multer({
+    storage,
 });

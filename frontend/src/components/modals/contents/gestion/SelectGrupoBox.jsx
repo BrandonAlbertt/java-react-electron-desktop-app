@@ -7,7 +7,7 @@ export default function SelectGrupoBox({
   onSelect = () => {},
   placeholder = "Seleccionar grupo",
 }) {
-  console.log("Lista de grupos en SelectGrupoBox:", grupos);
+  //console.log("Lista de grupos en SelectGrupoBox:", grupos);
 
   // =============================
   // ESTADOS Y REFERENCIAS

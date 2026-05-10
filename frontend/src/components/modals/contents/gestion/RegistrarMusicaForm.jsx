@@ -2,19 +2,29 @@ import { Music } from "lucide-react";
 import { useState } from "react";
 import UploadBox from "./UploadBox";
 import SelectGrupoBox from "./SelectGrupoBox";
+import SelectGenerosBox from "./SelectGenerosBox";
 
 export default function RegistrarMusicaForm({
   grupos = [],
+  generos = [],
+  onGuardarMusica = () => {},
 }) {
-  console.log("RegistrarMusicaForm recibió grupos:", grupos);
+  ///console.log("RegistrarMusicaForm recibió grupos:", grupos);
   // =============================
   // ESTADO DEL FORMULARIO
   // =============================
+  // selectedGrupo: grupo seleccionado del dropdown
   const [selectedGrupo, setSelectedGrupo] = useState(null);
+  // titulo: título de la canción
   const [titulo, setTitulo] = useState("");
+  // letra: letra de la canción
   const [letra, setLetra] = useState("");
-  const [linkAudio, setLinkAudio] = useState("");
+  // duracion: duración de la canción en formato MM:SS (opcional)
   const [duracion, setDuracion] = useState("");
+  // selectedGeneroIds: array de IDs de géneros seleccionados
+  const [selectedGeneroIds, setSelectedGeneroIds] = useState([]);
+  // archivoAudio: objeto File del audio subido
+  const [archivoAudio, setArchivoAudio] = useState(null);
 
   // =============================
   // MANEJADORES
@@ -27,6 +37,9 @@ export default function RegistrarMusicaForm({
     });
   };
 
+  //============================
+  // handleRegistrar: valida campos y llama a onGuardarMusica con los datos
+  // =============================    
   const handleRegistrar = async () => {
     if (!selectedGrupo) {
       alert("Por favor selecciona un grupo");
@@ -38,20 +51,27 @@ export default function RegistrarMusicaForm({
       return;
     }
 
+    if (!archivoAudio) {
+      alert("Por favor sube un archivo de música");
+      return;
+    }
+
     const datosMusica = {
       titulo: titulo.trim(),
       letra: letra.trim(),
-      grupoId: selectedGrupo.id,
-      grupoNombre: selectedGrupo.nombre,
-      linkAudio: linkAudio.trim(),
-      duracion: duracion.trim(),
+      grupo_id: selectedGrupo.id,
+      generos_ids: selectedGeneroIds,
+      duracion_segundos: Number(duracion) || 0,
+      audio: archivoAudio,
     };
 
     console.log("Datos a registrar:", datosMusica);
-    // Aquí va la llamada a la API para registrar la música
-    // await onRegistrarMusica(datosMusica);
+    
+    //esta envia los datos de la musica al componente home para enviar al backend
+    await onGuardarMusica(datosMusica);
   };
 
+  // puedeRegistrar: habilita el botón solo si hay grupo seleccionado y título no vacío
   const puedeRegistrar = !!selectedGrupo && !!titulo.trim();
 
   return (
@@ -88,7 +108,7 @@ export default function RegistrarMusicaForm({
               value={letra}
               onChange={(e) => setLetra(e.target.value)}
               placeholder="Escribe la letra de la canción..."
-              className="min-h-[125px] w-full resize-none rounded-2xl border border-fuchsia-500/40 bg-black/30 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-fuchsia-400"
+              className="min-h-31.25 w-full resize-none rounded-2xl border border-fuchsia-500/40 bg-black/30 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-fuchsia-400"
             />
           </div>
 
@@ -119,17 +139,17 @@ export default function RegistrarMusicaForm({
         {/* ============================= */}
         <div className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-semibold text-white">
-              Link de audio
-            </label>
 
-            <input
-              type="text"
-              value={linkAudio}
-              onChange={(e) => setLinkAudio(e.target.value)}
-              placeholder="Pega el link de audio..."
-              className="w-full rounded-2xl border border-fuchsia-500/40 bg-black/30 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-fuchsia-400"
+            {/* ============================= */}
+            {/* SELECT GENEROS */}
+            {/* ============================= */}
+
+            <SelectGenerosBox 
+              generos={generos}
+              selectedGeneroIds={selectedGeneroIds}
+              onChangeGeneros={setSelectedGeneroIds}
             />
+
           </div>
 
           <div>
@@ -140,9 +160,9 @@ export default function RegistrarMusicaForm({
             <input
               type="text"
               value={duracion}
-              onChange={(e) => setDuracion(e.target.value)}
-              placeholder="00:00"
-              className="w-full rounded-2xl border border-fuchsia-500/40 bg-black/30 px-4 py-3 text-center text-lg text-white outline-none placeholder:text-white/35 focus:border-fuchsia-400"
+              readOnly
+              placeholder="00"
+              className="w-full cursor-not-allowed rounded-2xl border border-fuchsia-500/40 bg-black/30 px-4 py-3 text-center text-lg text-white outline-none placeholder:text-white/35"
             />
           </div>
 
@@ -151,6 +171,10 @@ export default function RegistrarMusicaForm({
             description="Haz clic o arrastra un archivo"
             extra="MP3, WAV, M4A · Máx. 20MB"
             type="music"
+            onFileChange={({ file, duracionSegundos }) => {
+              setArchivoAudio(file);
+              setDuracion(String(duracionSegundos));
+            }}
           />
         </div>
       </div>
@@ -161,7 +185,7 @@ export default function RegistrarMusicaForm({
         className={`mx-auto mt-7 flex w-full max-w-md items-center justify-center gap-3 rounded-2xl border px-5 py-3 font-bold transition ${
           puedeRegistrar
             ? "border-fuchsia-400/60 bg-fuchsia-500/20 text-fuchsia-100 shadow-[0_0_24px_rgba(217,70,239,0.45)] hover:bg-fuchsia-500/30"
-            : "border-white/10 bg-white/[0.025] text-white/30 cursor-not-allowed"
+            : "border-white/10 bg-white/2.5 text-white/30 cursor-not-allowed"
         }`}
       >
         <Music size={22} />

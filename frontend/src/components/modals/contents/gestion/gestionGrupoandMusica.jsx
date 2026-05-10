@@ -2,9 +2,11 @@ import RegistrarGrupoForm from "./RegistrarGrupoForm";
 import RegistrarMusicaForm from "./RegistrarMusicaForm";
 
 export default function GestionGrupoAndMusica({
-    grupos = [],
+  grupos = [],
+  generos = [],
+  onGuardarMusica = () => {},
 }) {
-  console.log("GestionGrupoAndMusica recibió grupos:", grupos);
+  //console.log("GestionGrupoAndMusica recibió grupos:", grupos);
   return (
     <div className="grid w-full grid-cols-1 gap-6 text-left lg:grid-cols-[0.72fr_1.65fr]">
       {/* ============================= */}
@@ -17,6 +19,8 @@ export default function GestionGrupoAndMusica({
       {/* ============================= */}
       <RegistrarMusicaForm 
         grupos={grupos} 
+        generos={generos}
+        onGuardarMusica={onGuardarMusica}
       />
     </div>
   );

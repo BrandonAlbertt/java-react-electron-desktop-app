@@ -7,15 +7,16 @@ const { crearSlug } = require("../utils/slug");
 // =============================
 // VARIABLES DE ENTORNO
 // =============================
-// MEDIA_ROOT es /media dentro de docker.
+// Ruta pública base y carpeta física de media.
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 const MEDIA_ROOT = process.env.MEDIA_ROOT || "/media";
 
 // =============================
 // HELPERS
 // =============================
-// utilidades pequeñas para datos y archivos.
+// Utilidades pequeñas para validar datos y manejar archivos.
 function parseGenerosIds(valor) {
+    // Convierte y valida los géneros recibidos.
     if (valor === undefined || valor === null || valor === "") {
         return [];
     }
@@ -40,6 +41,7 @@ function parseGenerosIds(valor) {
 }
 
 function parseDuracion(valor) {
+    // Convierte la duración a número o devuelve null.
     if (valor === undefined || valor === null || valor === "") {
         return null;
     }
@@ -54,10 +56,12 @@ function parseDuracion(valor) {
 }
 
 function crearLinkAudio(carpetaSlug, filename) {
+    // Construye la URL pública del archivo de audio.
     return `${PUBLIC_URL}/media/musicbh/${carpetaSlug}/canciones/${filename}`;
 }
 
 function obtenerPathDesdeLink(linkAudio) {
+    // Convierte el link público en una ruta física segura.
     if (!linkAudio) return null;
 
     let pathname = linkAudio;
@@ -84,6 +88,7 @@ function obtenerPathDesdeLink(linkAudio) {
 }
 
 function crearNombreAudio(titulo, extension) {
+    // Genera un nombre estable a partir del título.
     const tituloSlug = crearSlug(titulo);
 
     if (!tituloSlug) {
@@ -94,6 +99,7 @@ function crearNombreAudio(titulo, extension) {
 }
 
 function guardarAudioSubido(file, titulo, grupo) {
+    // Guarda el archivo subido en la carpeta del grupo.
     if (!grupo.carpeta_slug) {
         const error = new Error("El grupo no tiene carpeta_slug configurado");
         error.statusCode = 400;
@@ -130,6 +136,7 @@ function guardarAudioSubido(file, titulo, grupo) {
 }
 
 function moverAudioSiCorresponde(musicaActual, datosNuevos, grupoNuevo) {
+    // Mueve el audio cuando cambia el título o el grupo.
     if (!musicaActual.link_audio) {
         return {
             link_audio: musicaActual.link_audio,
@@ -189,6 +196,7 @@ function moverAudioSiCorresponde(musicaActual, datosNuevos, grupoNuevo) {
 }
 
 function manejarError(res, mensaje, error) {
+    // Respuesta uniforme de error para los controladores.
     const status = error.statusCode || 500;
 
     res.status(status).json({
@@ -198,10 +206,11 @@ function manejarError(res, mensaje, error) {
 }
 
 // =============================
-// LISTAR MUSICA
+// LISTAR MÚSICA
 // =============================
-// devuelve todas las canciones.
+// Devuelve todas las canciones.
 async function listarMusica(req, res) {
+    // Devuelve todas las canciones registradas.
     try {
         const musica = await musicaModel.listarMusica();
         res.json(musica);
@@ -212,10 +221,11 @@ async function listarMusica(req, res) {
 }
 
 // =============================
-// OBTENER MUSICA
+// OBTENER MÚSICA
 // =============================
-// busca una cancion por id.
+// Busca una canción por id.
 async function obtenerMusicaPorId(req, res) {
+    // Busca una canción por su id.
     try {
         const musica = await musicaModel.obtenerMusicaPorId(req.params.id);
 
@@ -233,10 +243,11 @@ async function obtenerMusicaPorId(req, res) {
 }
 
 // =============================
-// CREAR MUSICA
+// CREAR MÚSICA
 // =============================
-// crea cancion usando JSON.
+// Crea una canción usando JSON.
 async function crearMusica(req, res) {
+    // Crea una canción usando datos JSON.
     try {
         const generos_ids = parseGenerosIds(req.body.generos_ids);
 
@@ -266,10 +277,11 @@ async function crearMusica(req, res) {
 }
 
 // =============================
-// CREAR MUSICA CON AUDIO
+// CREAR MÚSICA CON AUDIO
 // =============================
-// sube audio y guarda link_audio.
+// Sube el audio y guarda su link público.
 async function crearMusicaConAudio(req, res) {
+    // Crea una canción y guarda el archivo de audio.
     let audioGuardado = null;
 
     try {
@@ -318,10 +330,11 @@ async function crearMusicaConAudio(req, res) {
 }
 
 // =============================
-// EDITAR MUSICA
+// EDITAR MÚSICA
 // =============================
-// actualiza datos, generos y audio si aplica.
+// Actualiza datos, géneros y audio si aplica.
 async function editarMusica(req, res) {
+    // Actualiza la canción y mueve el audio si cambia la ruta.
     let movimiento = null;
 
     try {
@@ -399,10 +412,11 @@ async function editarMusica(req, res) {
 }
 
 // =============================
-// ELIMINAR MUSICA
+// ELIMINAR MÚSICA
 // =============================
-// elimina relaciones, registro y archivo.
+// Elimina relaciones, registro y archivo físico.
 async function eliminarMusica(req, res) {
+    // Borra la canción, sus relaciones y su archivo físico.
     try {
         const musica = await musicaModel.obtenerMusicaPorId(req.params.id);
 
@@ -447,7 +461,7 @@ async function eliminarMusica(req, res) {
 // =============================
 // EXPORTAR CONTROLADORES
 // =============================
-// funciones usadas en musica.routes.js.
+// Funciones usadas en musica.routes.js.
 module.exports = {
     listarMusica,
     obtenerMusicaPorId,

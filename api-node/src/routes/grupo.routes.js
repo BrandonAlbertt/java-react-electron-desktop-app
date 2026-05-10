@@ -1,55 +1,109 @@
 const express = require("express");
+
 const uploadGrupo = require("../middlewares/uploadGrupo.middleware");
 const GrupoController = require("../controllers/grupo.controller");
 
 const router = express.Router();
 
-function subirImagenGrupo(req, res, next) {
-    uploadGrupo.single("imagen")(req, res, (error) => {
-        if (error) {
-            return res.status(400).json({
-                mensaje: error.message,
-            });
-        }
+// ======================================================
+// RUTAS GRUPOS MUSICALES
+// ======================================================
+// flujo:
+//
+// routes
+// -> controller
+// -> model
+// -> base de datos
+//
+// prefijo principal:
+// /api/grupos-musicales
+//
+// ejemplos finales:
+//
+// GET    /api/grupos-musicales/listar
+// GET    /api/grupos-musicales/obtener/1
+// POST   /api/grupos-musicales/crear
+// POST   /api/grupos-musicales/crear-con-imagen
+// PUT    /api/grupos-musicales/actualizar/1
+// DELETE /api/grupos-musicales/eliminar/1
+// ======================================================
 
-        next();
-    });
-}
 
 // =============================
-// RUTA PARA SUBIR IMAGEN Y CREAR GRUPO
+// LISTAR TODOS LOS GRUPOS
 // =============================
-// IMPORTANTE:
-// Las rutas con texto fijo van antes de "/:id" para que Express no las confunda
-// con ids. Se mantienen aliases descriptivos y rutas REST para no romper clientes.
+// devuelve todos los grupos musicales
+router.get(
+    "/listar",
+    GrupoController.listarGrupos
+);
+
+
+// =============================
+// OBTENER GRUPO POR ID
+// =============================
+// ejemplo:
+// /obtener/1
+router.get(
+    "/obtener/:id",
+    GrupoController.obtenerGrupoPorId
+);
+
+
+// =============================
+// CREAR GRUPO SIMPLE
+// =============================
+// crea grupo usando body json
+router.post(
+    "/crear",
+    GrupoController.crearGrupo
+);
+
+
+// =============================
+// CREAR GRUPO CON IMAGEN
+// =============================
+// recibe:
+// - nombre
+// - imagen
+//
+// crea:
+// carpeta del grupo
+// carpeta canciones
+// imagen del grupo
 router.post(
     "/crear-con-imagen",
-    subirImagenGrupo,
+    uploadGrupo.single("imagen"),
     GrupoController.crearGrupoConImagen
 );
 
-router.post(
-    "/upload",
-    subirImagenGrupo,
-    GrupoController.crearGrupoConImagen
+
+// =============================
+// ACTUALIZAR GRUPO
+// =============================
+// actualiza informacion de grupo
+router.put(
+    "/actualizar/:id",
+    GrupoController.actualizarGrupo
 );
 
-// =============================
-// RUTAS DESCRIPTIVAS
-// =============================
-router.get("/listar", GrupoController.listarGrupos);
-router.get("/obtener/:id", GrupoController.obtenerGrupoPorId);
-router.post("/crear", GrupoController.crearGrupo);
-router.put("/actualizar/:id", GrupoController.actualizarGrupo);
-router.delete("/eliminar/:id", GrupoController.eliminarGrupo);
 
 // =============================
-// RUTAS REST
+// ELIMINAR GRUPO COMPLETO
 // =============================
-router.get("/", GrupoController.listarGrupos);
-router.get("/:id", GrupoController.obtenerGrupoPorId);
-router.post("/", GrupoController.crearGrupo);
-router.put("/:id", GrupoController.actualizarGrupo);
-router.delete("/:id", GrupoController.eliminarGrupo);
+// elimina:
+// - grupo
+// - canciones relacionadas
+// - relaciones listas
+// - relaciones generos
+// - carpeta fisica
+router.delete(
+    "/eliminar/:id",
+    GrupoController.eliminarGrupo
+);
 
+
+// =============================
+// EXPORTAR ROUTER
+// =============================
 module.exports = router;
