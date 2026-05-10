@@ -15,6 +15,7 @@ import { useBiblioteca } from "../hooks/useBiblioteca";
 import { useExplorar } from "../hooks/useExplorar";
 import { useListas } from "../hooks/useListas";
 import { useMusica } from "../hooks/useMusica";
+import { useGrupos } from "../hooks/useGrupos";
 
 // ===============================
 // COMPONENTE PRINCIPAL
@@ -49,8 +50,10 @@ export default function Home({ usuario, onLogout }) {
         error: errorExplorar,
     } = useExplorar();
 
-    // expone acciones para musica sin cambiar el flujo actual
+    // expone la funcion que esta eh hook useMusica que guarda la musica guardarMusica
     const { guardarMusica } = useMusica();
+    // expone la funcion que esta en el hook useGrupos que guarda el grupo guardarGrupo
+    const { guardarGrupo } = useGrupos();
 
     //console.log("Home - explorarData.grupos:", explorarData?.grupos);
 
@@ -453,6 +456,7 @@ export default function Home({ usuario, onLogout }) {
                 grupos={explorarData?.grupos || []}
                 generos={explorarData?.generos || []}
                 onGuardarMusica={guardarMusica}
+                onGuardarGrupo={guardarGrupo}
             />
         </section>
     );

@@ -4,32 +4,19 @@ import { AnimatePresence, motion } from "framer-motion";
 import WelcomeScreen from "../components/auth/WelcomeScreen";
 import LoginForm from "../components/auth/LoginForm";
 import RegisterForm from "../components/auth/RegisterForm";
+import { useAvatares } from "../hooks/useAvatares";
+
+const pageAnimation = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+};
 
 
 
 export default function Welcome({ onLogin }) {
     const [view, setView] = useState("welcome");
-
-    const pageAnimation = {
-        initial: {
-            opacity: 0,
-            y: 25,
-            scale: 0.97,
-            filter: "blur(8px)",
-        },
-        animate: {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            filter: "blur(0px)",
-        },
-        exit: {
-            opacity: 0,
-            y: -25,
-            scale: 0.97,
-            filter: "blur(8px)",
-        },
-    };
+    const { avatares: avataresObtenidos } = useAvatares();
 
     return (
         <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07050a] text-white">
@@ -65,6 +52,7 @@ export default function Welcome({ onLogin }) {
                             <RegisterForm
                                 onBack={() => setView("welcome")}
                                 onRegister={onLogin}
+                                avataresObtenidos={avataresObtenidos}
                             />
                         )}
                     </motion.div>

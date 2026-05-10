@@ -1,15 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User, Mail, Lock, ArrowLeft } from "lucide-react";
 
-const avatars = [
-    "https://i.imgur.com/4AiXzf8.jpeg",
-    "https://i.imgur.com/Nh6G6xG.jpeg",
-    "https://i.imgur.com/YQ9ZQZz.jpeg",
-    "https://i.imgur.com/8Km9tLL.jpeg",
-];
 
-export default function RegisterForm({ onBack, onRegister }) {
-    const [selectedAvatar, setSelectedAvatar] = useState(avatars[0]);
+
+export default function RegisterForm({ 
+    onBack, 
+    onRegister,
+    avataresObtenidos = [], 
+}) {
+    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [selectedAvatar, setSelectedAvatar] = useState(null);
+
+    // Mostrar avatares obtenidos en consola
+    useEffect(() => {
+        if (avataresObtenidos.length > 0) {
+            console.log("Avatares recibidos:");
+            avataresObtenidos.forEach((avatar) => {
+                console.log(`ID: ${avatar.id}, Nombre: ${avatar.nombre}, URL: ${avatar.imagen_url}`);
+            });
+        }
+    }, [avataresObtenidos]);
 
     return (
         <section className="flex w-full max-w-[980px] flex-col items-center gap-8 px-6">
@@ -49,12 +61,24 @@ export default function RegisterForm({ onBack, onRegister }) {
                             Crea tu perfil
                         </h2>
 
-                        <InputBox icon={<User size={18} />} placeholder="Nick Name" />
-                        <InputBox icon={<Mail size={18} />} placeholder="nombre@user.com" />
+                        <InputBox 
+                            icon={<User size={18} />} 
+                            placeholder="Nick Name"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                        />
+                        <InputBox 
+                            icon={<Mail size={18} />} 
+                            placeholder="nombre@user.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
                         <InputBox
                             icon={<Lock size={18} />}
                             type="password"
                             placeholder="Contraseña"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
 
@@ -73,12 +97,12 @@ export default function RegisterForm({ onBack, onRegister }) {
                         </div>
 
                         <div className="grid grid-cols-2 gap-x-8 gap-y-7">
-                            {avatars.map((avatar) => {
-                                const active = selectedAvatar === avatar;
+                            {avataresObtenidos.map((avatar) => {
+                                const active = selectedAvatar?.id === avatar.id;
 
                                 return (
                                     <button
-                                        key={avatar}
+                                        key={avatar.id}
                                         type="button"
                                         onClick={() => setSelectedAvatar(avatar)}
                                         className={`
@@ -91,8 +115,8 @@ export default function RegisterForm({ onBack, onRegister }) {
                                         />
 
                                         <img
-                                            src={avatar}
-                                            alt="Avatar"
+                                            src={avatar.imagen_url}
+                                            alt={avatar.nombre}
                                             className="relative h-full w-full rounded-full object-cover"
                                         />
 
@@ -126,7 +150,7 @@ export default function RegisterForm({ onBack, onRegister }) {
     );
 }
 
-function InputBox({ icon, type = "text", placeholder }) {
+function InputBox({ icon, type = "text", placeholder, value, onChange }) {
   return (
     <label
       className="
@@ -146,6 +170,8 @@ function InputBox({ icon, type = "text", placeholder }) {
       <input
         type={type}
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         className="w-full bg-transparent text-sm font-medium text-white outline-none placeholder:text-white/30"
       />
     </label>

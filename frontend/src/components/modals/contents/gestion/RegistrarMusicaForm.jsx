@@ -25,6 +25,8 @@ export default function RegistrarMusicaForm({
   const [selectedGeneroIds, setSelectedGeneroIds] = useState([]);
   // archivoAudio: objeto File del audio subido
   const [archivoAudio, setArchivoAudio] = useState(null);
+  // isSaving: indica si se está guardando
+  const [isSaving, setIsSaving] = useState(false);
 
   // =============================
   // MANEJADORES
@@ -66,13 +68,24 @@ export default function RegistrarMusicaForm({
     };
 
     console.log("Datos a registrar:", datosMusica);
-    
-    //esta envia los datos de la musica al componente home para enviar al backend
-    await onGuardarMusica(datosMusica);
+
+    try {
+      setIsSaving(true);
+      await onGuardarMusica(datosMusica);
+      // limpiar campos después de guardar exitosamente
+      setTitulo("");
+      setLetra("");
+      setSelectedGrupo(null);
+      setSelectedGeneroIds([]);
+      setDuracion("");
+      setArchivoAudio(null);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  // puedeRegistrar: habilita el botón solo si hay grupo seleccionado y título no vacío
-  const puedeRegistrar = !!selectedGrupo && !!titulo.trim();
+  // puedeRegistrar: habilita el botón solo si hay grupo seleccionado, título y audio no vacío, y no está guardando
+  const puedeRegistrar = !!selectedGrupo && !!titulo.trim() && !!archivoAudio && !isSaving;
 
   return (
     <section className="flex min-h-0 flex-col">
@@ -189,7 +202,7 @@ export default function RegistrarMusicaForm({
         }`}
       >
         <Music size={22} />
-        Registrar música
+        {isSaving ? "Registrando música..." : "Registrar música"}
       </button>
     </section>
   );

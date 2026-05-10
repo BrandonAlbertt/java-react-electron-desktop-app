@@ -20,6 +20,7 @@ export default function ModalPlaylist({
     grupos = [],
     generos = [],
     onGuardarMusica = () => {},
+    onGuardarGrupo = () => {},
     tabInicial = "usuario",
 }) {
     const [tabActiva, setTabActiva] = useState(tabInicial);
@@ -158,6 +159,7 @@ export default function ModalPlaylist({
                                 grupos={grupos}
                                 generos={generos}
                                 onGuardarMusica={onGuardarMusica}
+                                onGuardarGrupo={onGuardarGrupo}
                             />
                         </div>
                     )}

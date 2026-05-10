@@ -1,5 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+//imagen cuando no hay imagen de playlist
+import ningunoGrupo from "../../../../assets/ninguno-grupo.png";
 
 export default function SelectGrupoBox({
   grupos = [],
@@ -114,7 +116,7 @@ export default function SelectGrupoBox({
               src={
                 selected?.imagen_url ||
                 selected?.imagen ||
-                "/images/default-group.png"
+                ningunoGrupo
               }
               alt={selected?.nombre || "Grupo"}
               className="

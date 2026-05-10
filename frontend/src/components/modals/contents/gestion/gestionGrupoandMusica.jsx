@@ -5,6 +5,7 @@ export default function GestionGrupoAndMusica({
   grupos = [],
   generos = [],
   onGuardarMusica = () => {},
+  onGuardarGrupo = () => {},
 }) {
   //console.log("GestionGrupoAndMusica recibió grupos:", grupos);
   return (
@@ -12,7 +13,9 @@ export default function GestionGrupoAndMusica({
       {/* ============================= */}
       {/* FORMULARIO REGISTRAR GRUPO */}
       {/* ============================= */}
-      <RegistrarGrupoForm />
+      <RegistrarGrupoForm 
+        onGuardarGrupo={onGuardarGrupo}
+      />
 
       {/* ============================= */}
       {/* FORMULARIO REGISTRAR MUSICA */}

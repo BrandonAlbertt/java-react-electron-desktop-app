@@ -13,6 +13,9 @@ import {
     Volume2,
 } from "lucide-react";
 
+//imagen cuando no hay imagen de playlist
+import discoMusic from "../../assets/disco-music.png";
+
 // ===============================
 // COMPONENTE PRINCIPAL
 // ===============================
@@ -112,7 +115,7 @@ export default function PlayerBar({
                     <div className="relative">
                         <div className="absolute inset-0 rounded-full bg-fuchsia-500/10 blur-md" />
                         <img
-                            src={cancion?.imagen_grupo || "https://via.placeholder.com/60"}
+                            src={cancion?.imagen_grupo || discoMusic}
                             alt={cancion?.titulo || "Portada de cancion"}
                             className="relative h-12 w-12 rounded-full object-cover ring-1 ring-fuchsia-500/20"
                         />
