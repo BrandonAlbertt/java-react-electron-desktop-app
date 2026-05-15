@@ -1,7 +1,0 @@
-packages:
-  - api-node
-  - frontend
-  - electron
-allowBuilds:
-  bcrypt: set this to true or false
-  electron: set this to true or false
