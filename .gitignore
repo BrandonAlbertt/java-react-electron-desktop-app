@@ -21,9 +21,26 @@ api-node/dist/
 # ENV
 # =========================
 .env
+.env.*
 api-node/.env
+api-node/.env.*
 frontend/.env
+frontend/.env.*
 electron/.env
+electron/.env.*
+
+# =========================
+# SECRETS / CERTIFICADOS
+# =========================
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.truststore
+*.crt
+*.cer
 
 # =========================
 # IDEs
@@ -55,5 +72,4 @@ mariadb_data/
 # =========================
 # MEDIA OPCIONAL
 # =========================
-# Descomenta si NO quieres subir multimedia
 media/

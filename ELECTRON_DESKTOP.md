@@ -1,19 +1,19 @@
-# Guía completa de Electron para integrar React + Java
+﻿# GuÃ­a completa de Electron para integrar React + Java
 
 ## 1. Objetivo de esta parte
 
-En esta sección se configura **Electron** para convertir el proyecto en una **aplicación de escritorio**.
+En esta secciÃ³n se configura **Electron** para convertir el proyecto en una **aplicaciÃ³n de escritorio**.
 
-Electron se encargará de:
+Electron se encargarÃ¡ de:
 
 - abrir una ventana de escritorio
 - cargar el frontend hecho con React + Vite
 - quitar la barra de ventana nativa de Windows
-- permitir una barra personalizada diseñada en React
+- permitir una barra personalizada diseÃ±ada en React
 - permitir usar botones propios de **minimizar, maximizar y cerrar**
-- definir un tamaño mínimo permitido para la ventana
+- definir un tamaÃ±o mÃ­nimo permitido para la ventana
 
-En este proyecto, Electron actúa como la **capa de escritorio**.
+En este proyecto, Electron actÃºa como la **capa de escritorio**.
 
 Resumen simple:
 
@@ -23,27 +23,27 @@ Resumen simple:
 
 ---
 
-## 2. Qué se necesita antes de usar Electron
+## 2. QuÃ© se necesita antes de usar Electron
 
 Antes de configurar Electron, ya debe existir:
 
 - el backend Java funcionando
 - el frontend React funcionando
-- Node.js y npm instalados
+- Node.js y pnpm instalados
 
-También conviene tener el frontend corriendo con Vite en:
+TambiÃ©n conviene tener el frontend corriendo con Vite en:
 
 ```text
 http://localhost:5173
 ```
 
-Porque Electron cargará esa ruta durante el desarrollo.
+Porque Electron cargarÃ¡ esa ruta durante el desarrollo.
 
 ---
 
 ## 3. Crear la carpeta de Electron
 
-Desde la raíz del proyecto, crea una carpeta para Electron:
+Desde la raÃ­z del proyecto, crea una carpeta para Electron:
 
 ```bash
 mkdir electron
@@ -57,7 +57,7 @@ cd electron
 Dentro de la carpeta `electron`, ejecuta:
 
 ```bash
-npm init -y
+pnpm init
 ```
 
 Esto crea el archivo `package.json`.
@@ -69,10 +69,10 @@ Esto crea el archivo `package.json`.
 Ejecuta:
 
 ```bash
-npm install electron --save-dev
+pnpm add -D electron
 ```
 
-### Qué hace esta librería
+### QuÃ© hace esta librerÃ­a
 
 - instala Electron en el proyecto
 - permite abrir ventanas de escritorio usando Chromium + Node.js
@@ -101,17 +101,17 @@ Archivo:
 }
 ```
 
-### Explicación breve
+### ExplicaciÃ³n breve
 
-- `main`: indica cuál es el archivo principal de Electron
-- `start`: permite ejecutar Electron con `npm start`
+- `main`: indica cuÃ¡l es el archivo principal de Electron
+- `start`: permite ejecutar Electron con `ppnpm start`
 - `electron`: dependencia que crea la app de escritorio
 
 ---
 
 ## 7. Archivos que se usan en Electron
 
-En esta configuración se usan tres archivos principales:
+En esta configuraciÃ³n se usan tres archivos principales:
 
 - `main.js`
 - `preload.js`
@@ -121,7 +121,7 @@ Resumen:
 
 - `main.js` controla la ventana principal
 - `preload.js` expone funciones seguras al frontend React
-- `package.json` configura cómo se ejecuta Electron
+- `package.json` configura cÃ³mo se ejecuta Electron
 
 ---
 
@@ -187,10 +187,10 @@ app.on("window-all-closed", () => {
 
 ---
 
-## 9. Explicación de `main.js`
+## 9. ExplicaciÃ³n de `main.js`
 
 ### `app`
-Controla el ciclo de vida de la aplicación Electron.
+Controla el ciclo de vida de la aplicaciÃ³n Electron.
 
 ### `BrowserWindow`
 Crea la ventana principal de escritorio.
@@ -205,13 +205,13 @@ Se usa para encontrar correctamente la ruta del archivo `preload.js`.
 Guarda la referencia de la ventana principal.
 
 ### `createWindow()`
-Función que construye la ventana de Electron.
+FunciÃ³n que construye la ventana de Electron.
 
 ---
 
-## 10. Tamaño inicial y tamaño mínimo permitido
+## 10. TamaÃ±o inicial y tamaÃ±o mÃ­nimo permitido
 
-Dentro de `BrowserWindow` se configuró:
+Dentro de `BrowserWindow` se configurÃ³:
 
 ```js
 width: 1200,
@@ -220,41 +220,41 @@ minWidth: 1200,
 minHeight: 800,
 ```
 
-### Qué significa
+### QuÃ© significa
 
 - `width`: ancho inicial de la ventana
 - `height`: alto inicial de la ventana
-- `minWidth`: ancho mínimo permitido
-- `minHeight`: alto mínimo permitido
+- `minWidth`: ancho mÃ­nimo permitido
+- `minHeight`: alto mÃ­nimo permitido
 
 Con esto, el usuario puede agrandar la ventana, pero no reducirla a menos de `1200 x 800`.
 
 ---
 
-## 11. Cómo quitar la barra nativa de Windows
+## 11. CÃ³mo quitar la barra nativa de Windows
 
-Se configuró esto:
+Se configurÃ³ esto:
 
 ```js
 frame: false,
 autoHideMenuBar: true,
 ```
 
-### Qué hace cada uno
+### QuÃ© hace cada uno
 
 #### `frame: false`
 Quita la barra de ventana por defecto del sistema operativo.
 
 Eso elimina:
 
-- título nativo de la ventana
+- tÃ­tulo nativo de la ventana
 - botones nativos de minimizar, maximizar y cerrar
-- borde típico del sistema
+- borde tÃ­pico del sistema
 
 #### `autoHideMenuBar: true`
-Oculta la barra de menú tradicional de Electron.
+Oculta la barra de menÃº tradicional de Electron.
 
-Eso elimina menús como:
+Eso elimina menÃºs como:
 
 - File
 - Edit
@@ -267,7 +267,7 @@ Con estas dos opciones, la ventana queda limpia para usar una barra personalizad
 
 ## 12. Fondo de la ventana
 
-Se configuró:
+Se configurÃ³:
 
 ```js
 backgroundColor: "#0a0a0a",
@@ -279,9 +279,9 @@ Sirve para que el inicio combine mejor con el tema oscuro del frontend.
 
 ---
 
-## 13. Seguridad básica en Electron
+## 13. Seguridad bÃ¡sica en Electron
 
-Dentro de `webPreferences` se configuró:
+Dentro de `webPreferences` se configurÃ³:
 
 ```js
 webPreferences: {
@@ -291,24 +291,24 @@ webPreferences: {
 }
 ```
 
-### Explicación breve
+### ExplicaciÃ³n breve
 
 #### `preload`
-Indica qué archivo se ejecutará antes de cargar el frontend.
+Indica quÃ© archivo se ejecutarÃ¡ antes de cargar el frontend.
 
 #### `contextIsolation: true`
-Aísla el frontend del contexto interno de Electron.
+AÃ­sla el frontend del contexto interno de Electron.
 
 Esto mejora la seguridad.
 
 #### `nodeIntegration: false`
 Evita que React use directamente Node.js en la ventana.
 
-También mejora la seguridad.
+TambiÃ©n mejora la seguridad.
 
 ---
 
-## 14. Cómo Electron carga el frontend React
+## 14. CÃ³mo Electron carga el frontend React
 
 En `main.js` se usa:
 
@@ -316,13 +316,13 @@ En `main.js` se usa:
 mainWindow.loadURL("http://localhost:5173");
 ```
 
-### Qué hace
+### QuÃ© hace
 
-Carga la aplicación React que está corriendo con Vite en desarrollo.
+Carga la aplicaciÃ³n React que estÃ¡ corriendo con Vite en desarrollo.
 
 Durante desarrollo:
 
-- React debe estar corriendo con `npm run dev`
+- React debe estar corriendo con `pnpm dev`
 - Electron abre la URL local del frontend
 
 ---
@@ -345,12 +345,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
 ---
 
-## 16. Qué hace `preload.js`
+## 16. QuÃ© hace `preload.js`
 
 Este archivo crea un puente seguro entre Electron y React.
 
 ### `contextBridge`
-Permite exponer funciones específicas al frontend.
+Permite exponer funciones especÃ­ficas al frontend.
 
 ### `ipcRenderer`
 Permite enviar mensajes desde React hacia Electron.
@@ -362,11 +362,11 @@ Hace disponible un objeto global llamado:
 window.electronAPI
 ```
 
-Ese objeto se podrá usar dentro del frontend React.
+Ese objeto se podrÃ¡ usar dentro del frontend React.
 
 ---
 
-## 17. Qué funciones se exponen al frontend
+## 17. QuÃ© funciones se exponen al frontend
 
 En `preload.js` se expusieron estas funciones:
 
@@ -376,18 +376,18 @@ window.electronAPI.maximize()
 window.electronAPI.close()
 ```
 
-### Qué hace cada una
+### QuÃ© hace cada una
 
-- `minimize()` envía el evento `window-minimize`
-- `maximize()` envía el evento `window-maximize`
-- `close()` envía el evento `window-close`
+- `minimize()` envÃ­a el evento `window-minimize`
+- `maximize()` envÃ­a el evento `window-maximize`
+- `close()` envÃ­a el evento `window-close`
 
 Estas funciones no hacen el trabajo directamente.
-Solo envían un mensaje a `main.js`.
+Solo envÃ­an un mensaje a `main.js`.
 
 ---
 
-## 18. Cómo `main.js` escucha esos eventos
+## 18. CÃ³mo `main.js` escucha esos eventos
 
 En `main.js` se usan estos eventos:
 
@@ -409,30 +409,30 @@ ipcMain.on("window-close", () => {
 });
 ```
 
-### Qué hace esto
+### QuÃ© hace esto
 
 - escucha mensajes enviados desde React
 - ejecuta acciones reales sobre la ventana de Electron
 
 ---
 
-## 19. Cómo funcionan los botones personalizados desde React
+## 19. CÃ³mo funcionan los botones personalizados desde React
 
-En React se usaron botones así:
+En React se usaron botones asÃ­:
 
 ```jsx
-<button onClick={() => window.electronAPI?.minimize()}>—</button>
-<button onClick={() => window.electronAPI?.maximize()}>□</button>
-<button onClick={() => window.electronAPI?.close()}>✕</button>
+<button onClick={() => window.electronAPI?.minimize()}>â€”</button>
+<button onClick={() => window.electronAPI?.maximize()}>â–¡</button>
+<button onClick={() => window.electronAPI?.close()}>âœ•</button>
 ```
 
 ### Flujo real
 
-1. el usuario hace clic en un botón del frontend
+1. el usuario hace clic en un botÃ³n del frontend
 2. React llama a `window.electronAPI`
-3. `preload.js` envía un evento IPC
+3. `preload.js` envÃ­a un evento IPC
 4. `main.js` recibe ese evento
-5. Electron ejecuta la acción sobre la ventana
+5. Electron ejecuta la acciÃ³n sobre la ventana
 
 Resumen:
 
@@ -442,7 +442,7 @@ React -> preload.js -> ipcRenderer -> ipcMain -> BrowserWindow
 
 ---
 
-## 20. Cómo se logró una barra personalizada en React
+## 20. CÃ³mo se logrÃ³ una barra personalizada en React
 
 Como la barra nativa de Windows fue eliminada con:
 
@@ -450,11 +450,11 @@ Como la barra nativa de Windows fue eliminada con:
 frame: false
 ```
 
-la parte superior de la app tuvo que diseñarse manualmente desde React.
+la parte superior de la app tuvo que diseÃ±arse manualmente desde React.
 
-En React se usó una cabecera personalizada.
+En React se usÃ³ una cabecera personalizada.
 
-También se aplicaron estas propiedades:
+TambiÃ©n se aplicaron estas propiedades:
 
 ```jsx
 style={{ WebkitAppRegion: "drag" }}
@@ -466,7 +466,7 @@ y dentro de los botones:
 style={{ WebkitAppRegion: "no-drag" }}
 ```
 
-### Qué significa
+### QuÃ© significa
 
 #### `drag`
 Hace que una zona pueda arrastrar la ventana, como una barra normal.
@@ -481,7 +481,7 @@ Esto permite:
 
 ---
 
-## 21. Cómo abrir la app en pantalla completa
+## 21. CÃ³mo abrir la app en pantalla completa
 
 Si se desea iniciar en pantalla completa, se puede agregar en `BrowserWindow`:
 
@@ -513,19 +513,19 @@ mainWindow = new BrowserWindow({
 
 Para este proyecto no fue obligatorio usar pantalla completa.
 
-Lo que sí se configuró fue:
+Lo que sÃ­ se configurÃ³ fue:
 
-- tamaño inicial amplio
-- tamaño mínimo permitido
-- adaptación del frontend al cambiar tamaño
+- tamaÃ±o inicial amplio
+- tamaÃ±o mÃ­nimo permitido
+- adaptaciÃ³n del frontend al cambiar tamaÃ±o
 
-Eso normalmente es más cómodo que forzar fullscreen.
+Eso normalmente es mÃ¡s cÃ³modo que forzar fullscreen.
 
 ---
 
-## 22. Cómo maximizar al iniciar sin usar fullscreen
+## 22. CÃ³mo maximizar al iniciar sin usar fullscreen
 
-Si se quiere abrir la app maximizada al inicio, se puede hacer después de crear la ventana:
+Si se quiere abrir la app maximizada al inicio, se puede hacer despuÃ©s de crear la ventana:
 
 ```js
 mainWindow.maximize();
@@ -558,38 +558,38 @@ function createWindow() {
 ### Diferencia
 
 - `fullscreen: true` ocupa toda la pantalla y oculta elementos del sistema
-- `maximize()` agranda la ventana al máximo, pero sigue siendo una ventana normal
+- `maximize()` agranda la ventana al mÃ¡ximo, pero sigue siendo una ventana normal
 
 ---
 
-## 23. Estructura mínima de la carpeta Electron
+## 23. Estructura mÃ­nima de la carpeta Electron
 
 ```text
 electron/
-├── main.js
-├── preload.js
-└── package.json
+â”œâ”€â”€ main.js
+â”œâ”€â”€ preload.js
+â””â”€â”€ package.json
 ```
 
 ---
 
-## 24. Cómo ejecutar Electron
+## 24. CÃ³mo ejecutar Electron
 
 Primero debe estar corriendo React:
 
 ```bash
 cd frontend
-npm run dev
+pnpm dev
 ```
 
 Luego, en otra terminal, ejecutar Electron:
 
 ```bash
 cd electron
-npm start
+ppnpm start
 ```
 
-### Qué hace
+### QuÃ© hace
 
 - React levanta la interfaz en `localhost:5173`
 - Electron abre una ventana de escritorio y carga esa URL
@@ -609,45 +609,45 @@ mvn clean compile exec:java
 
 ```bash
 cd frontend
-npm run dev
+pnpm dev
 ```
 
 ### Terminal 3: Electron
 
 ```bash
 cd electron
-npm start
+ppnpm start
 ```
 
 ---
 
-## 26. Qué se logró con esta configuración
+## 26. QuÃ© se logrÃ³ con esta configuraciÃ³n
 
-Con esta parte del proyecto se logró:
+Con esta parte del proyecto se logrÃ³:
 
 - convertir React en una app de escritorio
 - quitar la barra nativa de Windows
-- ocultar el menú File/Edit/View
-- usar una barra diseñada manualmente en React
+- ocultar el menÃº File/Edit/View
+- usar una barra diseÃ±ada manualmente en React
 - usar botones personalizados de minimizar, maximizar y cerrar
-- definir tamaño mínimo permitido
-- mantener una apariencia más moderna
+- definir tamaÃ±o mÃ­nimo permitido
+- mantener una apariencia mÃ¡s moderna
 
 ---
 
 ## 27. Resumen breve de conceptos clave
 
 ### Electron
-Convierte tecnologías web en una aplicación de escritorio.
+Convierte tecnologÃ­as web en una aplicaciÃ³n de escritorio.
 
 ### BrowserWindow
-Crea la ventana principal de la aplicación.
+Crea la ventana principal de la aplicaciÃ³n.
 
 ### preload.js
 Expone funciones seguras al frontend React.
 
 ### ipcRenderer
-Envía eventos desde React hacia Electron.
+EnvÃ­a eventos desde React hacia Electron.
 
 ### ipcMain
 Recibe eventos y ejecuta acciones en la ventana.
@@ -656,24 +656,27 @@ Recibe eventos y ejecuta acciones en la ventana.
 Quita la barra nativa de la ventana.
 
 ### autoHideMenuBar: true
-Oculta la barra de menú tradicional.
+Oculta la barra de menÃº tradicional.
 
 ### minWidth / minHeight
-Definen el tamaño mínimo permitido.
+Definen el tamaÃ±o mÃ­nimo permitido.
 
 ### WebkitAppRegion
 Permite crear una barra arrastrable personalizada.
 
 ---
 
-## 28. Conclusión
+## 28. ConclusiÃ³n
 
-Electron fue la parte que permitió que el proyecto dejara de ser solo una web y pasara a comportarse como una aplicación de escritorio.
+Electron fue la parte que permitiÃ³ que el proyecto dejara de ser solo una web y pasara a comportarse como una aplicaciÃ³n de escritorio.
 
-Gracias a esta configuración:
+Gracias a esta configuraciÃ³n:
 
 - el frontend React se muestra como software de escritorio
-- la ventana tiene un diseño más limpio
+- la ventana tiene un diseÃ±o mÃ¡s limpio
 - el usuario puede controlar la ventana con botones propios
-- el proyecto se ve más moderno y más profesional
+- el proyecto se ve mÃ¡s moderno y mÃ¡s profesional
+
+
+
 

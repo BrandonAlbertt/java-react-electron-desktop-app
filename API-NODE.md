@@ -1,32 +1,32 @@
-# API-NODE
+﻿# API-NODE
 
 ## Finalidad
 
-`api-node` es el backend/API del proyecto de música.
+`api-node` es el backend/API del proyecto de mÃºsica.
 
-Su función principal es:
+Su funciÃ³n principal es:
 
 - Conectarse a MariaDB
 - Exponer endpoints REST
-- Servir información al frontend React/Electron
-- Gestionar canciones, usuarios, listas y géneros
+- Servir informaciÃ³n al frontend React/Electron
+- Gestionar canciones, usuarios, listas y gÃ©neros
 - Servir rutas de archivos multimedia (audio, portadas, avatares)
 
 Arquitectura general:
 
 ```text
 Frontend React/Electron
-        ↓
+        â†“
 API Node.js (api-node)
-        ↓
+        â†“
 MariaDB
-        ↓
+        â†“
 Archivos multimedia
 ```
 
 ---
 
-# Instalación inicial
+# InstalaciÃ³n inicial
 
 ## 1. Clonar el proyecto
 
@@ -63,7 +63,7 @@ cd api-node
 ## Inicializar Node
 
 ```bash
-npm init -y
+pnpm init
 ```
 
 ---
@@ -71,29 +71,29 @@ npm init -y
 ## Instalar dependencias principales
 
 ```bash
-npm install express cors dotenv mysql2
+pnpm add express cors dotenv mysql2
 ```
 
-### Explicación
+### ExplicaciÃ³n
 
 | Paquete | Finalidad |
 |---|---|
 | express | Framework backend/API |
-| cors | Permite conexión frontend-backend |
+| cors | Permite conexiÃ³n frontend-backend |
 | dotenv | Variables de entorno |
-| mysql2 | Conexión MariaDB/MySQL |
+| mysql2 | ConexiÃ³n MariaDB/MySQL |
 
 ---
 
 ## Instalar dependencias de desarrollo
 
 ```bash
-npm install -D nodemon
+pnpm add -D nodemon
 ```
 
 ### Finalidad
 
-`nodemon` reinicia automáticamente el servidor cuando detecta cambios.
+`nodemon` reinicia automÃ¡ticamente el servidor cuando detecta cambios.
 
 ---
 
@@ -101,31 +101,31 @@ npm install -D nodemon
 
 ```text
 api-node/
-│
-├── src/
-│   ├── config/
-│   │   └── db.js
-│   │
-│   ├── routes/
-│   │   └── musica.routes.js
-│   │
-│   ├── controllers/
-│   │   └── musica.controller.js
-│   │
-│   ├── services/
-│   │
-│   ├── models/
-│   │
-│   └── app.js
-│
-├── .env
-├── package.json
-└── README.md
+â”‚
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ config/
+â”‚   â”‚   â””â”€â”€ db.js
+â”‚   â”‚
+â”‚   â”œâ”€â”€ routes/
+â”‚   â”‚   â””â”€â”€ musica.routes.js
+â”‚   â”‚
+â”‚   â”œâ”€â”€ controllers/
+â”‚   â”‚   â””â”€â”€ musica.controller.js
+â”‚   â”‚
+â”‚   â”œâ”€â”€ services/
+â”‚   â”‚
+â”‚   â”œâ”€â”€ models/
+â”‚   â”‚
+â”‚   â””â”€â”€ app.js
+â”‚
+â”œâ”€â”€ .env
+â”œâ”€â”€ package.json
+â””â”€â”€ README.md
 ```
 
 ---
 
-# Configuración de scripts
+# ConfiguraciÃ³n de scripts
 
 Editar `package.json`:
 
@@ -154,7 +154,7 @@ DB_NAME=musicdb
 
 ---
 
-# Conexión MariaDB
+# ConexiÃ³n MariaDB
 
 Archivo:
 
@@ -184,15 +184,15 @@ module.exports = pool;
 ## Desarrollo
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ---
 
-## Producción
+## ProducciÃ³n
 
 ```bash
-npm start
+pnpm start
 ```
 
 ---
@@ -239,7 +239,7 @@ git push origin feature/api-node
 
 ---
 
-# Tecnologías usadas
+# TecnologÃ­as usadas
 
 - Node.js
 - Express
@@ -248,3 +248,4 @@ git push origin feature/api-node
 - Electron
 - React
 - SQL
+

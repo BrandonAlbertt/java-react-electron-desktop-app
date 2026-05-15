@@ -1,15 +1,15 @@
-# FRONTEND_REACT.md
+﻿# FRONTEND_REACT.md
 
 ## 1. Objetivo de esta parte
 
-En esta parte se configura el **frontend** de la aplicación usando:
+En esta parte se configura el **frontend** de la aplicaciÃ³n usando:
 
 - **React** para la interfaz
-- **Vite** para crear y ejecutar el proyecto rápido
+- **Vite** para crear y ejecutar el proyecto rÃ¡pido
 - **Tailwind CSS** para estilos modernos con clases
-- **HTML** a través del renderizado de React
+- **HTML** a travÃ©s del renderizado de React
 
-Este frontend se conecta con el backend Java mediante una petición HTTP a:
+Este frontend se conecta con el backend Java mediante una peticiÃ³n HTTP a:
 
 ```text
 http://127.0.0.1:8080/api/saludo
@@ -17,30 +17,30 @@ http://127.0.0.1:8080/api/saludo
 
 ---
 
-## 2. Qué se necesita antes de empezar
+## 2. QuÃ© se necesita antes de empezar
 
 Antes de crear el frontend, ya debes tener instalado:
 
 - **Node.js**
-- **npm**
+- **pnpm**
 - **VS Code**
 - El **backend Java corriendo** o al menos ya creado
 
-Para verificar Node y npm:
+Para verificar Node y pnpm:
 
 ```bash
 node -v
-npm -v
+pnpm -v
 ```
 
 ---
 
 ## 3. Crear el frontend con React y Vite
 
-Desde la carpeta raíz del proyecto, ejecutar:
+Desde la carpeta raÃ­z del proyecto, ejecutar:
 
 ```bash
-npm create vite@latest frontend
+pnpm create vite@latest frontend
 ```
 
 Luego elegir:
@@ -57,44 +57,44 @@ cd frontend
 Instalar dependencias base:
 
 ```bash
-npm install
+pnpm install
 ```
 
 ---
 
-## 4. Librerías necesarias del frontend
+## 4. LibrerÃ­as necesarias del frontend
 
 Instalar Tailwind y los plugins usados:
 
 ```bash
-npm install tailwindcss @tailwindcss/vite @vitejs/plugin-react @rolldown/plugin-babel
+pnpm add tailwindcss @tailwindcss/vite @vitejs/plugin-react @rolldown/plugin-babel
 ```
 
-### Qué hace cada librería
+### QuÃ© hace cada librerÃ­a
 
 - **react**: construye la interfaz en componentes.
 - **react-dom**: renderiza React en el navegador.
-- **vite**: servidor de desarrollo rápido y empaquetador.
+- **vite**: servidor de desarrollo rÃ¡pido y empaquetador.
 - **tailwindcss**: framework de utilidades CSS.
 - **@tailwindcss/vite**: integra Tailwind directamente con Vite.
 - **@vitejs/plugin-react**: permite que Vite entienda React.
-- **@rolldown/plugin-babel**: ayuda con la transformación del código React cuando se usa esa configuración.
+- **@rolldown/plugin-babel**: ayuda con la transformaciÃ³n del cÃ³digo React cuando se usa esa configuraciÃ³n.
 
 ---
 
-## 5. Estructura básica del frontend
+## 5. Estructura bÃ¡sica del frontend
 
-Una estructura simple puede quedar así:
+Una estructura simple puede quedar asÃ­:
 
 ```text
 frontend/
-├── src/
-│   ├── App.jsx
-│   ├── App.css
-│   ├── main.jsx
-│   └── index.css
-├── package.json
-└── vite.config.js
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ App.jsx
+â”‚   â”œâ”€â”€ App.css
+â”‚   â”œâ”€â”€ main.jsx
+â”‚   â””â”€â”€ index.css
+â”œâ”€â”€ package.json
+â””â”€â”€ vite.config.js
 ```
 
 ---
@@ -120,11 +120,11 @@ export default defineConfig({
 })
 ```
 
-### Qué hace este archivo
+### QuÃ© hace este archivo
 
-- `defineConfig(...)`: define la configuración de Vite.
+- `defineConfig(...)`: define la configuraciÃ³n de Vite.
 - `react()`: activa soporte para React.
-- `babel(...)`: aplica la configuración indicada para React.
+- `babel(...)`: aplica la configuraciÃ³n indicada para React.
 - `tailwindcss()`: activa Tailwind dentro de Vite.
 
 ---
@@ -139,7 +139,7 @@ Archivo:
 @import "tailwindcss";
 ```
 
-### Qué hace
+### QuÃ© hace
 
 Le dice al proyecto que cargue Tailwind CSS.
 
@@ -164,12 +164,12 @@ createRoot(document.getElementById('root')).render(
 )
 ```
 
-### Qué hace este archivo
+### QuÃ© hace este archivo
 
-- `StrictMode`: ayuda a detectar malas prácticas en desarrollo.
+- `StrictMode`: ayuda a detectar malas prÃ¡cticas en desarrollo.
 - `createRoot(...)`: monta React en el HTML.
 - `import './index.css'`: carga Tailwind.
-- `App`: componente principal de la aplicación.
+- `App`: componente principal de la aplicaciÃ³n.
 
 ### Importante
 
@@ -177,7 +177,7 @@ No debes importar `index.css` dos veces.
 
 ---
 
-## 9. CSS mínimo global
+## 9. CSS mÃ­nimo global
 
 Archivo:
 
@@ -193,9 +193,9 @@ body,
 }
 ```
 
-### Qué hace
+### QuÃ© hace
 
-- elimina márgenes por defecto
+- elimina mÃ¡rgenes por defecto
 - hace que la app ocupe todo el alto y ancho
 
 ---
@@ -285,7 +285,7 @@ function App() {
                 : "px-3 h-8 bg-gray-200 hover:bg-gray-300 rounded text-sm"
             }
           >
-            {temaOscuro ? "☀" : "🌙"}
+            {temaOscuro ? "â˜€" : "ðŸŒ™"}
           </button>
 
           <button
@@ -296,7 +296,7 @@ function App() {
                 : "w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded"
             }
           >
-            —
+            â€”
           </button>
 
           <button
@@ -307,14 +307,14 @@ function App() {
                 : "w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded"
             }
           >
-            □
+            â–¡
           </button>
 
           <button
             onClick={() => window.electronAPI?.close()}
             className="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded"
           >
-            ✕
+            âœ•
           </button>
         </div>
       </header>
@@ -351,7 +351,7 @@ export default App;
 
 ---
 
-## 11. Explicación breve del código de `App.jsx`
+## 11. ExplicaciÃ³n breve del cÃ³digo de `App.jsx`
 
 ### `useState`
 
@@ -360,21 +360,21 @@ Se usa para guardar datos que cambian en pantalla.
 Se usan tres estados:
 
 - `datos`: guarda el mensaje recibido del backend.
-- `error`: guarda un mensaje si falla la conexión.
+- `error`: guarda un mensaje si falla la conexiÃ³n.
 - `temaOscuro`: cambia entre modo oscuro y claro.
 
 ### `useEffect`
 
 Se ejecuta al cargar el componente.
 
-Aquí se usa para:
+AquÃ­ se usa para:
 
 - llamar al backend cuando la pantalla inicia
 - volver a consultar cada 3 segundos
 
 ### `fetch(...)`
 
-Hace la petición HTTP al backend Java:
+Hace la peticiÃ³n HTTP al backend Java:
 
 ```js
 fetch("http://127.0.0.1:8080/api/saludo")
@@ -386,7 +386,7 @@ Vuelve a consultar la API cada 3 segundos.
 
 ### `window.electronAPI?.minimize()`
 
-Estos botones no los maneja React por sí solo.
+Estos botones no los maneja React por sÃ­ solo.
 
 Los usa cuando la app se ejecuta dentro de **Electron**.
 
@@ -398,7 +398,7 @@ Sirven para:
 
 ---
 
-## 12. Cómo se conecta el frontend con el backend Java
+## 12. CÃ³mo se conecta el frontend con el backend Java
 
 El backend Java expone esta ruta:
 
@@ -436,7 +436,7 @@ React -> fetch() -> Backend Java -> JSON -> React actualiza pantalla
 
 ---
 
-## 13. Qué debe estar corriendo para que funcione
+## 13. QuÃ© debe estar corriendo para que funcione
 
 ### Terminal 1: backend Java
 
@@ -449,7 +449,7 @@ mvn clean compile exec:java
 
 ```bash
 cd frontend
-npm run dev
+pnpm dev
 ```
 
 Luego abrir en el navegador:
@@ -460,11 +460,11 @@ http://localhost:5173
 
 ---
 
-## 14. Qué pasa si no carga los datos
+## 14. QuÃ© pasa si no carga los datos
 
 Revisar estos puntos:
 
-### 1. Ver si el backend Java está encendido
+### 1. Ver si el backend Java estÃ¡ encendido
 
 Probar en navegador:
 
@@ -484,37 +484,37 @@ fetch("http://127.0.0.1:8080/api/saludo")
 
 Presionar `F12` y revisar errores.
 
-### 4. Verificar que Tailwind esté bien configurado
+### 4. Verificar que Tailwind estÃ© bien configurado
 
 Si Tailwind falla, puede que la app funcione, pero sin estilos.
 
 ---
 
-## 15. Comandos útiles
+## 15. Comandos Ãºtiles
 
 ### Crear proyecto
 
 ```bash
-npm create vite@latest frontend
+pnpm create vite@latest frontend
 ```
 
 ### Instalar dependencias
 
 ```bash
-npm install
-npm install tailwindcss @tailwindcss/vite @vitejs/plugin-react @rolldown/plugin-babel
+pnpm install
+pnpm add tailwindcss @tailwindcss/vite @vitejs/plugin-react @rolldown/plugin-babel
 ```
 
 ### Ejecutar frontend
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
-### Crear build de producción
+### Crear build de producciÃ³n
 
 ```bash
-npm run build
+pnpm build
 ```
 
 ---
@@ -523,23 +523,25 @@ npm run build
 
 En esta parte del proyecto se hizo lo siguiente:
 
-- se creó el frontend con React y Vite
-- se instaló Tailwind CSS
-- se configuró Vite para usar React y Tailwind
-- se creó un componente principal `App.jsx`
-- se hizo una conexión al backend Java con `fetch`
+- se creÃ³ el frontend con React y Vite
+- se instalÃ³ Tailwind CSS
+- se configurÃ³ Vite para usar React y Tailwind
+- se creÃ³ un componente principal `App.jsx`
+- se hizo una conexiÃ³n al backend Java con `fetch`
 - se mostraron en pantalla los datos recibidos
-- se agregó cambio de tema oscuro/claro
-- se preparó la interfaz para funcionar dentro de Electron
+- se agregÃ³ cambio de tema oscuro/claro
+- se preparÃ³ la interfaz para funcionar dentro de Electron
 
 ---
 
-## 17. Qué sigue después
+## 17. QuÃ© sigue despuÃ©s
 
-Después de esta parte, lo siguiente normalmente es:
+DespuÃ©s de esta parte, lo siguiente normalmente es:
 
 - configurar **Electron**
 - abrir React dentro de una ventana de escritorio
 - conectar los botones de minimizar, maximizar y cerrar
 - empaquetar la app como programa instalable
+
+
 
