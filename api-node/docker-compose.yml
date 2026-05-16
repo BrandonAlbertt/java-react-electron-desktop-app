@@ -19,6 +19,15 @@ services:
     env_file:
       - .env
 
+    # Dentro de Docker no siempre resuelve nombres .local como rasb-brandon.local.
+    # Para conectar con MySQL instalado en la misma PC/Raspberry que corre Docker,
+    # usamos host.docker.internal y lo apuntamos al host real con host-gateway.
+    environment:
+      DB_HOST: host.docker.internal
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     # Conecta una carpeta de tu equipo con /media dentro del contenedor.
     # Sirve para mostrar imágenes o archivos sin copiarlos dentro de la app.
     # :ro significa que solo se pueden leer, no modificar.
