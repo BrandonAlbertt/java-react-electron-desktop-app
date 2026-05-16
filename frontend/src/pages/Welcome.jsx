@@ -5,6 +5,8 @@ import WelcomeScreen from "../components/auth/WelcomeScreen";
 import LoginForm from "../components/auth/LoginForm";
 import RegisterForm from "../components/auth/RegisterForm";
 import { useAvatares } from "../hooks/useAvatares";
+import { useUsuario } from "../hooks/useUsuario";
+
 
 const pageAnimation = {
     initial: { opacity: 0, y: 20 },
@@ -17,6 +19,8 @@ const pageAnimation = {
 export default function Welcome({ onLogin }) {
     const [view, setView] = useState("welcome");
     const { avatares: avataresObtenidos } = useAvatares();
+
+    const { guardarUsuario } = useUsuario();
 
     return (
         <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07050a] text-white">
@@ -53,6 +57,7 @@ export default function Welcome({ onLogin }) {
                                 onBack={() => setView("welcome")}
                                 onRegister={onLogin}
                                 avataresObtenidos={avataresObtenidos}
+                                onGuardarUser={guardarUsuario}
                             />
                         )}
                     </motion.div>

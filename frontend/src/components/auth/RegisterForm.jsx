@@ -7,6 +7,7 @@ export default function RegisterForm({
     onBack, 
     onRegister,
     avataresObtenidos = [], 
+    onGuardarUser = () => {},
 }) {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -22,6 +23,25 @@ export default function RegisterForm({
             });
         }
     }, [avataresObtenidos]);
+
+    const handleRegistrarUser = async () => {
+        if (!username.trim() || !email.trim() || !password.trim() || !selectedAvatar) {
+            alert("Por favor completa todos los campos y selecciona un avatar");
+            return;
+        }
+
+        const datosUser = {
+            avatar_id: selectedAvatar ? selectedAvatar.id : null,
+            nombre_usuario: username,
+            email: email,
+            contrasena: password,
+        }
+
+        console.log("Datos para registrar usuario:", datosUser);
+
+        const resultado = await onGuardarUser(datosUser);
+     
+    }
 
     return (
         <section className="flex w-full max-w-[980px] flex-col items-center gap-8 px-6">
@@ -134,7 +154,7 @@ export default function RegisterForm({
             {/* Botón registrar */}
             <button
               type="button"
-              onClick={onRegister}
+              onClick={handleRegistrarUser}
               className="
                 rounded-full border border-fuchsia-400/70 bg-black/90
                 px-20 py-3 text-sm font-bold tracking-wide text-white

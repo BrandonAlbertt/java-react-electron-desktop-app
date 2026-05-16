@@ -47,6 +47,7 @@ async function obtenerUsuarioPorId(req, res) {
 // N: Al crear el usuario, genera un JWT para autenticación inmediata
 async function crearUsuario(req, res) {
     try {
+        // estos nombres de campos deben coincidir con los que envía el frontend en el body
         const {
             avatar_id,
             nombre_usuario,
