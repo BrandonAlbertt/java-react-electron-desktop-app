@@ -5,10 +5,12 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Copia solo los archivos necesarios para instalar dependencias.
-COPY package.json ./
+COPY package.json pnpm-lock.yaml ./
 
 # Instala las librerías del proyecto dentro del contenedor.
-RUN corepack enable && corepack pnpm install --prod --ignore-scripts=false
+RUN corepack enable \
+    && corepack pnpm config set onlyBuiltDependencies bcrypt \
+    && corepack pnpm install --prod --frozen-lockfile
 
 # Copia todo el código de la API al contenedor.
 COPY . .
