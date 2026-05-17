@@ -14,8 +14,26 @@ electron/node_modules/
 api-node/node_modules/
 
 frontend/dist/
-electron/dist/
 api-node/dist/
+
+# =========================
+# ELECTRON BUILDER / EJECUTABLES
+# =========================
+# Salidas generadas al crear instaladores o portables.
+electron/dist/
+electron/dist-*/
+electron/release/
+electron/out/
+electron/*.exe
+electron/*.msi
+electron/*.blockmap
+electron/latest*.yml
+electron/builder-debug.yml
+electron/builder-effective-config.yaml
+
+# Cache local de pnpm si se crea dentro del proyecto.
+.pnpm-store/
+*/.pnpm-store/
 
 # =========================
 # ENV

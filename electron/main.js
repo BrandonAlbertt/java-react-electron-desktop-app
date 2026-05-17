@@ -22,6 +22,7 @@ function createWindow() {
         frame: false,              // quita barra nativa
         autoHideMenuBar: true,     // quita File Edit View
         backgroundColor: "#0a0a0a",
+        icon: path.join(__dirname, "assets", "ico_musicbhv3.ico"), // icono de la app
 
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
@@ -30,8 +31,18 @@ function createWindow() {
         }
     });
 
-    // Carga la app React en modo desarrollo
-    mainWindow.loadURL("http://localhost:5173");
+    if (app.isPackaged) {
+        // Modo produccion: carga el React compilado incluido dentro del .exe.
+        // Antes fallaba porque el portable dependia de localhost/Vite,
+        // o de una ruta externa que no existe al empaquetar.
+        mainWindow.loadFile(
+            path.join(__dirname, "frontend", "dist", "index.html")
+        );
+    } else {
+        // Modo desarrollo: carga Vite local.
+        // Ejecutar en paralelo: frontend `pnpm dev` y electron `pnpm start`.
+        mainWindow.loadURL("http://localhost:5173");
+    }
 }
 
 // Arranque de la app y registro de eventos IPC

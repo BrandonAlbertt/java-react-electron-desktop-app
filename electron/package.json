@@ -2,13 +2,47 @@
   "name": "desktop-electron",
   "version": "1.0.0",
   "packageManager": "pnpm@11.0.0",
-  "description": "",
+  "description": "musicBH Desktop App",
   "main": "main.js",
+
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:win": "pnpm --dir ../frontend build && electron-builder --win",
+    "build:portable": "pnpm --dir ../frontend build && electron-builder --win portable"
+  },
+
+  "build": {
+    "appId": "com.musicbh.desktop",
+    "productName": "musicBH",
+
+    "directories": {
+      "output": "dist"
+    },
+
+    "files": [
+      "main.js",
+      "preload.js",
+      "assets/**/*",
+      {
+        "from": "../frontend/dist",
+        "to": "frontend/dist",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+
+    "win": {
+      "icon": "assets/ico_musicbhv3.ico",
+      "target": [
+        "portable"
+      ]
+    }
   },
 
   "devDependencies": {
-    "electron": "^41.2.1"
+    "electron": "^41.2.1",
+    "electron-builder": "^26.8.1"
   }
 }
