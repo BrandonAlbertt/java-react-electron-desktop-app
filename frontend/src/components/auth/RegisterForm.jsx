@@ -39,7 +39,17 @@ export default function RegisterForm({
 
         console.log("Datos para registrar usuario:", datosUser);
 
-        const resultado = await onGuardarUser(datosUser);
+        try {
+            const resultado = await onGuardarUser(datosUser);
+            console.log("Usuario registrado:", resultado);
+
+            if (resultado) {
+                onRegister(resultado);
+            }
+        } catch (error) {
+            console.error("Error al registrar usuario:", error);
+            alert(error.response?.data?.mensaje || "No se pudo registrar el usuario");
+        }
      
     }
 

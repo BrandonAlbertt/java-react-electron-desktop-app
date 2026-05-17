@@ -335,13 +335,32 @@ export default function Home({ usuario, onLogout }) {
 
     // activa o desactiva el modo aleatorio
     const handleToggleShuffle = () => {
-        setShuffleActivo((prev) => !prev);
+        setShuffleActivo((prev) => {
+            const next = !prev;
+
+            // Shuffle y Repeat no pueden estar activos al mismo tiempo.
+            if (next) {
+                setRepeatActivo(false);
+            }
+
+            return next;
+        });
         setHistorialShuffle([]);
     };
 
     // activa o desactiva repetir
     const handleToggleRepeat = () => {
-        setRepeatActivo((prev) => !prev);
+        setRepeatActivo((prev) => {
+            const next = !prev;
+
+            // Repeat y Shuffle no pueden estar activos al mismo tiempo.
+            if (next) {
+                setShuffleActivo(false);
+                setHistorialShuffle([]);
+            }
+
+            return next;
+        });
     };
 
  

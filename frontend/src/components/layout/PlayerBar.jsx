@@ -3,6 +3,7 @@
 // ===============================
 import { useEffect, useRef, useState } from "react";
 import {
+    VolumeX,
     Pause,
     Play,
     Plus,
@@ -38,6 +39,7 @@ export default function PlayerBar({
     const audioRef = useRef(null);
     const [currentTime, setCurrentTime] = useState(0);
     const [volume, setVolume] = useState(0.65);
+    const [lastVolume, setLastVolume] = useState(0.65);
 
     // ===============================
     // DATOS DERIVADOS
@@ -75,8 +77,34 @@ export default function PlayerBar({
         const newVolume = Number(e.target.value);
         setVolume(newVolume);
 
+        if (newVolume > 0) {
+            setLastVolume(newVolume);
+        }
+
         if (audioRef.current) {
             audioRef.current.volume = newVolume;
+        }
+    };
+
+    const handleToggleMute = () => {
+        const isMuted = volume === 0;
+
+        if (isMuted) {
+            const restoredVolume = lastVolume > 0 ? lastVolume : 0.65;
+            setVolume(restoredVolume);
+
+            if (audioRef.current) {
+                audioRef.current.volume = restoredVolume;
+            }
+
+            return;
+        }
+
+        setLastVolume(volume > 0 ? volume : lastVolume);
+        setVolume(0);
+
+        if (audioRef.current) {
+            audioRef.current.volume = 0;
         }
     };
 
@@ -225,7 +253,18 @@ export default function PlayerBar({
                     </button>
 
                     <div className="ml-2 flex items-center gap-2">
-                        <Volume2 size={17} className="text-white/65" />
+                        <button
+                            type="button"
+                            onClick={handleToggleMute}
+                            className="rounded p-1 text-white/65 transition hover:bg-white/10 hover:text-fuchsia-300"
+                            title={volume === 0 ? "Activar sonido" : "Silenciar"}
+                        >
+                            {volume === 0 ? (
+                                <VolumeX size={17} />
+                            ) : (
+                                <Volume2 size={17} />
+                            )}
+                        </button>
                         <input
                             type="range"
                             min="0"

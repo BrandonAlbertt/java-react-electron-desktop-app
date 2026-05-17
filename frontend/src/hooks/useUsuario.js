@@ -136,8 +136,13 @@ export function useUsuario() {
 
             const response = await apiLoginUsuario(data);
 
+            if (response?.token) {
+                localStorage.setItem("token", response.token);
+            }
+
             if (response?.usuario) {
                 setUsuario(response.usuario);
+                localStorage.setItem("usuario", JSON.stringify(response.usuario));
             }
 
             return response;
@@ -168,7 +173,18 @@ export function useUsuario() {
             return null;
         }
 
-        const usuarioParseado = JSON.parse(usuarioGuardado);
+        if (usuarioGuardado === "undefined" || usuarioGuardado === "null") {
+            return null;
+        }
+
+        let usuarioParseado;
+
+        try {
+            usuarioParseado = JSON.parse(usuarioGuardado);
+        } catch {
+            return null;
+        }
+
         setUsuario(usuarioParseado);
 
         return {

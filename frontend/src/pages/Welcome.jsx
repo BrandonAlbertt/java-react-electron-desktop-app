@@ -20,7 +20,7 @@ export default function Welcome({ onLogin }) {
     const [view, setView] = useState("welcome");
     const { avatares: avataresObtenidos } = useAvatares();
 
-    const { guardarUsuario } = useUsuario();
+    const { registrarUsuario } = useUsuario();
 
     return (
         <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07050a] text-white">
@@ -57,7 +57,7 @@ export default function Welcome({ onLogin }) {
                                 onBack={() => setView("welcome")}
                                 onRegister={onLogin}
                                 avataresObtenidos={avataresObtenidos}
-                                onGuardarUser={guardarUsuario}
+                                onGuardarUser={registrarUsuario}
                             />
                         )}
                     </motion.div>

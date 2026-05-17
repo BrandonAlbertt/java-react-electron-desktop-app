@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { obtenerUsuarioPorId } from "./api/usuarioApi";
 
 // Son componentes (ventanas) home y welcome (login/registro)
 import Home from "./pages/Home";
@@ -16,21 +17,114 @@ function App() {
   // =============================
   const [isLogged, setIsLogged] = useState(false);
   const [usuario, setUsuario] = useState(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+
+  const clearSession = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    setUsuario(null);
+    setIsLogged(false);
+  };
+
+  const parseTokenPayload = (token) => {
+    try {
+      const payloadBase64 = token.split(".")[1];
+      if (!payloadBase64) return null;
+
+      // JWT usa base64url, lo convertimos a base64 estándar para decodificarlo.
+      const normalized = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+      return JSON.parse(atob(padded));
+    } catch {
+      return null;
+    }
+  };
+
+  const parseUsuarioGuardado = (rawUsuario) => {
+    if (!rawUsuario || rawUsuario === "undefined" || rawUsuario === "null") {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawUsuario);
+    } catch {
+      return null;
+    }
+  };
 
   // =============================
   // FUNCIONES Y EVENTOS AGRUPADOS
   // =============================
   // Al cargar la app, revisar si hay token y usuario guardados en localStorage
   useEffect(() => {
-    // Obtener token del localStorage, si existe
-    const token = localStorage.getItem("token");
-    //recupera el usuario guardado en localStorage, si existe
-    const usuarioGuardado = localStorage.getItem("usuario");
+    let isMounted = true;
 
-    if (token && usuarioGuardado) {
-      setUsuario(JSON.parse(usuarioGuardado));
-      setIsLogged(true);
-    }
+    const bootstrapSession = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        if (isMounted) {
+          setIsLogged(false);
+          setUsuario(null);
+          setIsBootstrapping(false);
+        }
+        return;
+      }
+
+      const payload = parseTokenPayload(token);
+
+      // Si exp está presente y ya venció, limpiamos para volver a Welcome.
+      if (payload?.exp && Date.now() >= payload.exp * 1000) {
+        if (isMounted) {
+          clearSession();
+          setIsBootstrapping(false);
+        }
+        return;
+      }
+
+      const usuarioGuardado = parseUsuarioGuardado(localStorage.getItem("usuario"));
+
+      if (usuarioGuardado) {
+        if (isMounted) {
+          setUsuario(usuarioGuardado);
+          setIsLogged(true);
+          setIsBootstrapping(false);
+        }
+        return;
+      }
+
+      if (!payload?.id) {
+        if (isMounted) {
+          clearSession();
+          setIsBootstrapping(false);
+        }
+        return;
+      }
+
+      try {
+        const usuarioApi = await obtenerUsuarioPorId(payload.id);
+
+        if (isMounted && usuarioApi) {
+          localStorage.setItem("usuario", JSON.stringify(usuarioApi));
+          setUsuario(usuarioApi);
+          setIsLogged(true);
+        }
+      } catch {
+        if (isMounted) {
+          clearSession();
+        }
+      } finally {
+        if (isMounted) {
+          setIsBootstrapping(false);
+        }
+      }
+    };
+
+    bootstrapSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Manejar login y guardar en localStorage
@@ -43,11 +137,12 @@ function App() {
 
   // Manejar logout y limpiar localStorage
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
-    setUsuario(null);
-    setIsLogged(false);
+    clearSession();
   };
+
+  if (isBootstrapping) {
+    return <div className="h-screen w-screen bg-[#050507]" />;
+  }
 
 
   return (

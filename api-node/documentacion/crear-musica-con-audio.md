@@ -28,7 +28,7 @@ Frontend/Postman
 | `src/routes/musica.routes.js` | Define `POST /api/musica/crear-con-audio` y ejecuta el middleware de subida antes del controller. |
 | `src/controllers/musica.controller.js` | Valida datos, busca el grupo, guarda el audio fisico, genera `link_audio`, llama al model y responde JSON. |
 | `src/models/musica.model.js` | Consulta grupos, inserta musica, inserta generos y usa transacciones para mantener consistencia. |
-| `src/middlewares/uploadMusica.middleware.js` | Configura Multer para aceptar audio, limitar tamaño y entregar el archivo en memoria. |
+| `src/middlewares/uploadMusica.middleware.js` | Configura Multer con `memoryStorage` para recibir el archivo en memoria y no guardarlo todavia en disco. |
 | `src/models/grupo.model.js` | Contiene consultas de grupos; conceptualmente representa de donde sale `carpeta_slug`. En musica se usa una consulta equivalente desde `musica.model.js`. |
 | `src/utils/slug.js` | Convierte el titulo en un nombre seguro para archivo. |
 | `src/app.js` | Monta `musica.routes.js` en `/api/musica` y sirve `/media` como carpeta publica. |
@@ -130,6 +130,53 @@ Importante: el campo archivo debe llamarse exactamente `audio`, porque la ruta u
 | `req.file` | Lo crea Multer al recibir `audio`. | Contiene el archivo en memoria, su nombre original, mimetype y buffer. |
 | `req.grupo` | Patron comun en middlewares. | En esta version no se setea `req.grupo`; el controller usa `const grupo = await musicaModel.obtenerGrupoPorId(grupo_id)`. |
 
+## Correccion importante: evitar archivos sin registro en BD
+
+Antes, el middleware `uploadMusica.middleware.js` usaba `multer.diskStorage`.
+
+Eso hacia que Multer guardara el archivo fisico en la carpeta del grupo antes de que el controller intentara insertar la cancion en la base de datos.
+
+El problema era este:
+
+```text
+Multer guardaba el MP3 en /media/musicbh/<grupo>/canciones
+  -> luego el controller intentaba procesar la cancion
+  -> si fallaba la insercion en BD o habia conflicto de nombre
+  -> quedaba un archivo MP3 fisico sin registro en la tabla musica
+```
+
+Por eso podia pasar que vieras archivos como:
+
+```text
+/home/brandon/media/musicbh/starla/canciones/loco.mp3
+```
+
+pero al consultar la tabla `musica`, esa cancion no aparecia.
+
+La solucion aplicada fue cambiar el middleware a `memoryStorage`:
+
+```js
+module.exports = multer({
+    storage: multer.memoryStorage(),
+});
+```
+
+Con esta correccion, Multer solo recibe el archivo y lo deja en `req.file.buffer`.
+
+El controller queda como unico responsable de:
+
+```text
+validar datos
+  -> buscar grupo
+  -> crear carpeta
+  -> guardar archivo fisico
+  -> insertar registro en musica
+  -> insertar generos
+  -> borrar archivo si la BD falla
+```
+
+Esto evita que queden canciones fisicas huerfanas, es decir, archivos que existen en carpeta pero no existen en la base de datos.
+
 ## Fragmentos importantes
 
 ### Route `crear-con-audio`
@@ -171,14 +218,19 @@ function subirAudioMusica(req, res, next) {
 }
 ```
 
-El middleware valida tipo de audio y limite de tamaño. En la version actual usa `memoryStorage`, por eso el controller guarda el archivo con `fs.writeFileSync`.
+El middleware recibe el archivo del campo `audio`.
+
+En la version actual usa `memoryStorage`, por eso no guarda el archivo en disco. El archivo queda disponible en:
+
+```js
+req.file.buffer
+```
+
+Luego el controller guarda el archivo fisico con `fs.writeFileSync`.
 
 ```js
 module.exports = multer({
     storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 30 * 1024 * 1024,
-    },
 });
 ```
 
@@ -268,6 +320,16 @@ fs.writeFileSync(archivoPath, file.buffer);
 ```
 
 `recursive: true` asegura que la carpeta exista antes de guardar el audio.
+
+Importante: este guardado ocurre en el controller, no en Multer. Eso permite borrar el archivo si luego falla la insercion en base de datos:
+
+```js
+if (audioGuardado && audioGuardado.archivoPath) {
+    fs.rmSync(audioGuardado.archivoPath, {
+        force: true,
+    });
+}
+```
 
 ### Generacion de `link_audio`
 
