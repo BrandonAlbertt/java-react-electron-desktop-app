@@ -27,6 +27,7 @@ export default function RegistrarMusicaForm({
   const [archivoAudio, setArchivoAudio] = useState(null);
   // isSaving: indica si se está guardando
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadResetKey, setUploadResetKey] = useState(0);
 
   // =============================
   // MANEJADORES
@@ -79,6 +80,8 @@ export default function RegistrarMusicaForm({
       setSelectedGeneroIds([]);
       setDuracion("");
       setArchivoAudio(null);
+      // trigger UploadBox to reset its internal preview/state
+      setUploadResetKey((k) => k + 1);
     } finally {
       setIsSaving(false);
     }
@@ -188,6 +191,7 @@ export default function RegistrarMusicaForm({
               setArchivoAudio(file);
               setDuracion(String(duracionSegundos));
             }}
+            resetKey={uploadResetKey}
           />
         </div>
       </div>

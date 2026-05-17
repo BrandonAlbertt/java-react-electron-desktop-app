@@ -1,5 +1,5 @@
 import { Image, FileMusic, RefreshCcw } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 export default function UploadBox({
   title,
@@ -7,11 +7,13 @@ export default function UploadBox({
   extra,
   type = "image",
   onFileChange = () => {},
+  resetKey, // when this value changes, clear internal preview/state
 }) {
   const Icon = type === "music" ? FileMusic : Image;
 
   const inputRef = useRef(null);
   const audioRef = useRef(null);
+  const prevResetRef = useRef(resetKey);
 
   const [previewUrl, setPreviewUrl] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -57,6 +59,37 @@ export default function UploadBox({
       file,
     });
   };
+
+  // clear internal preview when parent requests reset
+  // use resetKey identity change to trigger
+  useEffect(() => {
+    if (typeof resetKey === "undefined") return;
+    if (prevResetRef.current === resetKey) return;
+
+    // stop audio if playing
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+    } catch (e) {}
+
+    setIsPlaying(false);
+
+    if (previewUrl) {
+      try {
+        URL.revokeObjectURL(previewUrl);
+      } catch (e) {}
+    }
+
+    setPreviewUrl("");
+    setFileName("");
+
+    if (inputRef.current) inputRef.current.value = "";
+
+    prevResetRef.current = resetKey;
+  }, [resetKey]);
+
 
   const togglePlay = (e) => {
     e.preventDefault();

@@ -7,6 +7,7 @@ export default function RegistrarGrupoForm({
 }) {
   const [nombreGrupo, setNombreGrupo] = useState("");
   const [archivoImagen, setArchivoImagen] = useState(null);
+  const [uploadResetKey, setUploadResetKey] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleRegistrarGrupo = async () => {
@@ -30,6 +31,8 @@ export default function RegistrarGrupoForm({
       await onGuardarGrupo(datosGrupo);
       setNombreGrupo("");
       setArchivoImagen(null);
+      // trigger UploadBox to reset its internal preview/state
+      setUploadResetKey((k) => k + 1);
     } finally {
       setIsSaving(false);
     }
@@ -75,6 +78,7 @@ export default function RegistrarGrupoForm({
           onFileChange={({ file }) => {
             setArchivoImagen(file);
           }}
+          resetKey={uploadResetKey}
         />
 
         <button

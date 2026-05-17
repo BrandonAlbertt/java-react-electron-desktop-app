@@ -76,6 +76,7 @@ export default function TopHeader({
                     onMinimize={handleMinimize}
                     onMaximize={handleMaximize}
                     onClose={handleClose}
+                    portfolioUrl="https://brandonbutron.dev"
                 />
             </div>
         </header>
